@@ -1,4 +1,14 @@
 
+
+
+#dependecies tk, gcc-fortran, postgresql-libs (manjaro names pacman)
+#install.packages("lme4",
+#   repos=c("http://lme4.r-forge.r-project.org/repos",
+#          getOption("repos")[["CRAN"]]))
+#
+#install.packages(c("data.table","ggplot2", "insight", "ggpubr", "ggrepel", "RPostgreSQL"))
+
+
 library(data.table)
 library(ggplot2)
 library(insight)
@@ -33,7 +43,7 @@ make_newdata <-
 
 fit_ci <- 
   function(fit, new_data){
-    pred <- predict(fit, newdata=new_data) 
+    pred <- predict(fit, newdata=new_data, allow.new.levels=TRUE) 
     ci <- get_predicted_ci(fit, pred, data = new_data, ci_type = "prediction") |> data.table()
     pred <- pred |> data.table()
     ci_pred  <- cbind(pred, ci)
@@ -111,6 +121,14 @@ uf_plot <-
   #ggsave(paste0("../figures/NC_", region, ".png"), width = 20, height = 20, units = "cm")
   }
 
+eval_num_cases <-
+	function(data, col_usuario, col_populacao){
+	num_cases <- 
+	  data[, .(NCDR = 10000 * sum(get(col_usuario)) / sum(get(col_populacao))), 
+	       keyby = .(nu_ano, sg_uf, co_macrorregiao, no_regiao_brasil)]
+	return(num_cases)
+	}
+
 
 # conexao com o SGBD
 pgcon <- DBI::dbConnect(
@@ -132,19 +150,25 @@ data <-
 data[, co_macrorregiao := factor(co_macrorregiao)]
 data[, nu_ano := nu_ano_dt_notific - min(nu_ano_dt_notific)]
 
-#num_cases <- 
-#  data[, .(NCDR = 10000 * sum(qt_usuario) / sum(qt_populacao)), 
-#       keyby = .(nu_ano, sg_uf, co_macrorregiao, no_regiao_brasil)]
+names(data)
+data[, qt_usuario_m := qt_usuario - qt_usuario_f]
 
-num_cases <- 
-  data[, .(NCDR = 10000 * sum(qt_usuario) / sum(qt_populacao)), 
-       keyby = .(nu_ano, sg_uf, co_macrorregiao, no_regiao_brasil)]
+num_cases  <- eval_num_cases(data, "qt_usuario", "qt_populacao") 
+num_cases  <- eval_num_cases(data, "qt_classopera_multibacilar", "qt_populacao") 
+num_cases  <- eval_num_cases(data, "qt_usuario_f", "qt_populacao") 
+num_cases  <- eval_num_cases(data, "qt_usuario_m", "qt_populacao") 
+num_cases  <- eval_num_cases(data, "qt_usuario_tpalta_cura", "qt_populacao") 
+num_cases  <- eval_num_cases(data, "qt_usuario_00a14", "qt_populacao00a14") 
+num_cases  <- eval_num_cases(data, "qt_usuario_20a59", "qt_populacao20a59") 
+#num_cases  <- eval_num_cases(data, "qt_classopera_paucibacilar", "qt_populacao") #all zeros
+num_cases
+
 
 fit_macro <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / co_macrorregiao), 
-             data = num_cases)
+             data = num_cases[NCDR > 0 & log(NCDR) > -5.5])
 
 fit_uf <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf), 
-             data = num_cases)
+             data = num_cases[NCDR > 0 & log(NCDR) > -5.5])
 
 new_data <- make_newdata(num_cases, 50)
 
