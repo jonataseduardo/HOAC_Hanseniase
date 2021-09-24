@@ -7,6 +7,7 @@
 #          getOption("repos")[["CRAN"]]))
 #
 #install.packages(c("data.table","ggplot2", "insight", "ggpubr", "ggrepel", "RPostgreSQL"))
+install.packages("tidymodels")
 
 
 library(data.table)
@@ -41,16 +42,6 @@ make_newdata <-
   return(new_data)
   }
 
-fit_ci <- 
-  function(fit, new_data){
-    pred <- predict(fit, newdata=new_data, allow.new.levels=TRUE) 
-    ci <- get_predicted_ci(fit, pred, data = new_data, ci_type = "prediction") |> data.table()
-    pred <- pred |> data.table()
-    ci_pred  <- cbind(pred, ci)
-    setnames(ci_pred, c('pred', 'CI_low', 'CI_high'), c('fit', 'lwr', 'upr'))
-    fit_data <- cbind(new_data, ci_pred)
-    return(fit_data)
-  }
 
 macro_plot <- 
   function(num_cases, fit_data, uf){
@@ -61,7 +52,7 @@ macro_plot <-
     theme_pubr() + 
     theme(axis.text.x=element_text(angle=45, hjust=1)) + 
     geom_point(aes(x = nu_ano, 
-                  y = log(NCDR), 
+                  y = NCDR, 
                   #alpha = uf, 
                   color = factor(co_macrorregiao),
                   ),
@@ -94,7 +85,7 @@ uf_plot <-
     theme_pubr() + 
     theme(axis.text.x=element_text(angle=45, hjust=1)) + 
     geom_point(aes(x = nu_ano, 
-                  y = log(NCDR), 
+                  y = NCDR, 
                   color = sg_uf,
                   ),
               alpha = 0.5,
@@ -129,6 +120,19 @@ eval_num_cases <-
 	return(num_cases)
 	}
 
+fit_ci <- 
+  function(fit, new_data){
+    pred <- predict(fit, newdata=new_data, allow.new.levels=TRUE) 
+    ci <- get_predicted_ci(fit, pred, data = new_data, ci_type = "prediction") |> data.table()
+    pred <- pred |> data.table()
+    ci_pred  <- cbind(pred, ci)
+    ci_pred[, fit := exp(pred)]
+    ci_pred[, upr := fit * exp(CI_high - pred)]
+    ci_pred[, lwr := fit * exp(CI_low - pred)]
+    ci_pred[, c("pred", "CI_low", "CI_high") := NULL]
+    fit_data <- cbind(new_data, ci_pred)
+    return(fit_data)
+  }
 
 # conexao com o SGBD
 pgcon <- DBI::dbConnect(
@@ -154,12 +158,12 @@ names(data)
 data[, qt_usuario_m := qt_usuario - qt_usuario_f]
 
 num_cases  <- eval_num_cases(data, "qt_usuario", "qt_populacao") 
-num_cases  <- eval_num_cases(data, "qt_classopera_multibacilar", "qt_populacao") 
-num_cases  <- eval_num_cases(data, "qt_usuario_f", "qt_populacao") 
-num_cases  <- eval_num_cases(data, "qt_usuario_m", "qt_populacao") 
-num_cases  <- eval_num_cases(data, "qt_usuario_tpalta_cura", "qt_populacao") 
-num_cases  <- eval_num_cases(data, "qt_usuario_00a14", "qt_populacao00a14") 
-num_cases  <- eval_num_cases(data, "qt_usuario_20a59", "qt_populacao20a59") 
+#num_cases  <- eval_num_cases(data, "qt_classopera_multibacilar", "qt_populacao") 
+#num_cases  <- eval_num_cases(data, "qt_usuario_f", "qt_populacao") 
+#num_cases  <- eval_num_cases(data, "qt_usuario_m", "qt_populacao") 
+#num_cases  <- eval_num_cases(data, "qt_usuario_tpalta_cura", "qt_populacao") 
+#num_cases  <- eval_num_cases(data, "qt_usuario_00a14", "qt_populacao00a14") 
+#num_cases  <- eval_num_cases(data, "qt_usuario_20a59", "qt_populacao20a59") 
 #num_cases  <- eval_num_cases(data, "qt_classopera_paucibacilar", "qt_populacao") #all zeros
 num_cases
 
@@ -172,15 +176,17 @@ fit_uf <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf),
 
 new_data <- make_newdata(num_cases, 50)
 
+
+
 macro_pred <- fit_ci(fit_macro, new_data)
 
 uf_pred <- fit_ci(fit_uf, new_data)
 
-macro_plot(num_cases, macro_pred, "SP")
-uf_plot(num_cases, uf_pred, "SUDESTE")
+macro_plot(num_cases, macro_pred, "TO")
+uf_plot(num_cases, uf_pred, "NORTE")
 
 #for(region in num_cases[,.GRP, by = no_regiao_brasil][, no_regiao_brasil]){
 #  uf_plot(region)
 #}
-
+?get_predicted_ci
 
