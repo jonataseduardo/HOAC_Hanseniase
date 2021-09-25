@@ -44,59 +44,77 @@ make_newdata <-
   return(new_data)
   }
 
-
-macro_plot <- 
+macro_plot <-
   function(data, uf){
-  ggplot(data[sg_uf == uf]) + 
-    guides(alpha = FALSE, fill="none", color=FALSE) + 
-    xlab(label = "Anos após 2000") + 
-    ylab(label = "Número de novos diagnosticos por 10.000 habitantes") + 
+  data_plot <- data[sg_uf == uf]
+  ggplot(data_plot) +
+    guides(alpha = FALSE) +
+    xlab(label = "Ano 20--") + 
+    ylab(label = "Número de novos diagnosticos por 100.000 habitantes") + 
     theme_pubr() + 
     theme(axis.text.x=element_text(angle=45, hjust=1)) + 
-    geom_point(aes(x = nu_ano, 
-                  y = NCDR, 
-                  color = sg_uf,
+    geom_point(aes(x = nu_ano,
+                   y = NCDR,
+                   color = grupo
                   ),
-              alpha = 0.5,
-              size = 1
+              alpha = 0.3,
+              size = 1, 
               ) + 
     geom_line(aes(x=nu_ano, 
-                  y = fit, 
-                  color = sg_uf)
+                  y = fit,
+                  color = grupo
+                  )
               )+ 
-    geom_ribbon(aes(x=nu_ano, 
+    geom_ribbon(aes(
+                  x=nu_ano, 
                   ymin = lwr, 
                   ymax = upr,
-                  fill = sg_uf),
-              alpha = 0.2
+                  fill = grupo
+                  ),
+              alpha = 0.1
               ) +
     facet_wrap(~no_macrorregiao)
   }
 
+
 uf_plot <- 
   function(data, region){
-  ggplot(data[no_regiao_brasil == region]) + 
+  data_plot <- data[no_regiao_brasil == region]
+  data_m <- 
+    data_plot[, .(NCDR = mean(NCDR)), by = .(grupo, sg_uf, nu_ano)]
+  ggplot(data_plot) +
     guides(alpha = FALSE, fill="none", color=FALSE) + 
-    xlab(label = "Anos após 2000") + 
-    ylab(label = "Número de novos diagnosticos por 10.000 habitantes") + 
+    xlab(label = "Ano 20--") + 
+    ylab(label = "Número de novos diagnosticos por 100.000 habitantes") + 
     theme_pubr() + 
     theme(axis.text.x=element_text(angle=45, hjust=1)) + 
-    geom_point(aes(x = nu_ano, 
-                  y = NCDR, 
-                  color = sg_uf,
+    geom_point(data = data_m, 
+               aes(x = nu_ano,
+                   y = NCDR,
+                   color = grupo
                   ),
-              alpha = 0.5,
-              size = 1
+              alpha = 0.9,
+              size = 2, 
+              ) + 
+    geom_point(aes(x = nu_ano,
+                   y = NCDR,
+                   color = grupo
+                  ),
+              alpha = 0.2,
+              size = 1, 
               ) + 
     geom_line(aes(x=nu_ano, 
-                  y = fit, 
-                  color = sg_uf)
+                  y = fit,
+                  color = grupo
+                  )
               )+ 
-    geom_ribbon(aes(x=nu_ano, 
+    geom_ribbon(aes(
+                  x=nu_ano, 
                   ymin = lwr, 
                   ymax = upr,
-                  fill = sg_uf),
-              alpha = 0.2
+                  fill = grupo
+                  ),
+              alpha = 0.1
               ) +
     facet_wrap(~sg_uf)
   }
@@ -107,9 +125,9 @@ eval_num_cases <-
            col_populacao,
            groupby = c("no_regiao_brasil", "sg_uf", "no_macrorregiao", "nu_ano")
            ){
-	num_cases <- 
-	  data[, .(NCDR = 100000 * sum(get(col_usuario)) / sum(get(col_populacao))), 
-	       keyby = groupby]
+    num_cases <- 
+      data[, .(NCDR = 100000 * sum(get(col_usuario)) / sum(get(col_populacao))), 
+          keyby = groupby]
 	return(num_cases)
 	}
 
@@ -157,40 +175,89 @@ data <-
   data_full[!is.na(sg_uf) & !is.na(no_macrorregiao) & nu_ano_dt_notific < 2020]
 data[, nu_ano := nu_ano_dt_notific - min(nu_ano_dt_notific)]
 data[, no_macrorregiao := factor(paste0(no_macrorregiao, ' (', sg_uf, ')'))]
+data[, no_macrorregiao := gsub("^(Macrorregião|Macrorregional)(.+)$","\\2", no_macrorregiao )]
+data[sg_uf == 'AC', no_macrorregiao := 'Única (AC)']
 data[, co_macrorregiao := factor(co_macrorregiao)]
+#data[, .GRP, no_macrorregiao1]
 
 
 #num_cases  <- eval_num_cases(data,"qt_usuario", "qt_populacao")
 #num_cases  <- eval_num_cases(data, "qt_classopera_multibacilar", "qt_populacao") 
-#num_cases  <- eval_num_cases(data, "qt_usuario_f", "qt_populacao") 
-#num_cases  <- eval_num_cases(data, "qt_usuario_m", "qt_populacao") 
+num_cases  <- eval_num_cases(data, "qt_usuario_f", "qt_populacao") 
+num_cases  <- eval_num_cases(data, "qt_usuario_m", "qt_populacao") 
 #num_cases  <- eval_num_cases(data, "qt_usuario_tpalta_cura", "qt_populacao") 
 #num_cases  <- eval_num_cases(data, "qt_usuario_00a14", "qt_populacao00a14") 
-num_cases  <- eval_num_cases(data, "qt_usuario_20a59", "qt_populacao20a59") 
+#num_cases  <- eval_num_cases(data, "qt_usuario_20a59", "qt_populacao20a59") 
 #num_cases  <- eval_num_cases(data, "qt_classopera_paucibacilar", "qt_populacao") #all zeros
 
-num_cases[NCDR < 1]
+pipeline <- 
+  function(data, 
+           nivel, 
+           col_usuario, 
+           col_populacao,
+           label){
 
-fit_macro <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / no_macrorregiao), 
-             data = num_cases[NCDR > 0])
+  num_cases  <- eval_num_cases(data, col_usuario, col_populacao) 
 
-fit_uf <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf), 
-             data = num_cases[NCDR > 0 ])
+  if(nivel == 'macro'){
+    fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / no_macrorregiao), 
+                data = num_cases[NCDR > 0])
+  } 
+  if(nivel == 'uf'){
+    fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf), 
+                data = num_cases[NCDR > 0 ])
+  }
+  if(nivel == 'br'){
+    fit <- lm(log(NCDR) ~ nu_ano ,
+              data = num_cases[NCDR > 0])
+  }
 
-fit_br <- lm(log(NCDR) ~ nu_ano ,
-             data = num_cases[NCDR > 0])
+  new_data <- make_newdata(num_cases, 50)
+  pred_data <- fit_ci(fit, new_data)
+  fit_result <- merge_fit_and_data(pred_data, num_cases)
+  fit_result[, grupo := label]
+  return(fit_result[])
+  }
 
-new_data <- make_newdata(num_cases, 50)
+uf_sex <- 
+  rbindlist(list(
+    pipeline(data, 'uf', 'qt_usuario_m', 'qt_populacao_m', 'm'),
+    pipeline(data, 'uf', 'qt_usuario_f', 'qt_populacao_f', 'f')
+    ))
 
-macro_pred <- fit_ci(fit_macro, new_data)
-macro_data <- merge_fit_and_data(macro_pred, num_cases)
+macro_sex <- 
+  rbindlist(list(
+    pipeline(data, 'macro', 'qt_usuario_m', 'qt_populacao_m', 'm'),
+    pipeline(data, 'macro', 'qt_usuario_f', 'qt_populacao_f', 'f')
+    ))
 
-uf_pred <- fit_ci(fit_uf, new_data)
-uf_data <- merge_fit_and_data(uf_pred, num_cases)
 
-br_pred <- fit_ci(fit_br, new_data)
+macro_idade <- 
+  rbindlist(list(
+    pipeline(data, 'macro', 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos'),
+    pipeline(data, 'macro', 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 20 e 59'),
+    pipeline(data, 'macro', 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
+    ))
+
+macro_diag <- 
+  rbindlist(list(
+    pipeline(data, 'macro', 'qt_usuario', 'qt_populacao_m', 'Total'),
+    pipeline(data, 'macro', 'qt_classopera_paucibacilar', 'qt_populacao', 'Paucibacilar'),
+    pipeline(data, 'macro', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
+    ))
+
+
+uf_data <- pipeline(data, 'uf', 'qt_usuario', 'qt_populacao', 'total')
+br_data <- pipeline(data, 'br', 'qt_usuario', 'qt_populacao', 'total')
+
+
 br_data <- merge_fit_and_data(br_pred, num_cases)
 
 
-macro_plot(macro_data, "SP")
-uf_plot(uf_data, "SUDESTE")
+macro_plot(macro_sex, "MG")
+macro_plot(macro_idade, "MG")
+macro_plot(macro_diag, "BA")
+
+uf_plot(uf_sex, "SUDESTE")
+uf_plot(uf_sex, "NORTE")
+uf_plot(uf_sex, "SUL")
