@@ -7,8 +7,7 @@
 #          getOption("repos")[["CRAN"]]))
 #
 #install.packages(c("data.table","ggplot2", "insight", "ggpubr", "ggrepel", "RPostgreSQL"))
-install.packages("tidymodels")
-
+#install.packages("tidymodels")
 
 library(data.table)
 library(ggplot2)
@@ -155,6 +154,8 @@ data[, co_macrorregiao := factor(co_macrorregiao)]
 data[, nu_ano := nu_ano_dt_notific - min(nu_ano_dt_notific)]
 
 names(data)
+
+
 data[, qt_usuario_m := qt_usuario - qt_usuario_f]
 
 num_cases  <- eval_num_cases(data, "qt_usuario", "qt_populacao") 
@@ -165,7 +166,6 @@ num_cases  <- eval_num_cases(data, "qt_usuario", "qt_populacao")
 #num_cases  <- eval_num_cases(data, "qt_usuario_00a14", "qt_populacao00a14") 
 #num_cases  <- eval_num_cases(data, "qt_usuario_20a59", "qt_populacao20a59") 
 #num_cases  <- eval_num_cases(data, "qt_classopera_paucibacilar", "qt_populacao") #all zeros
-num_cases
 
 
 fit_macro <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / co_macrorregiao), 
@@ -174,13 +174,17 @@ fit_macro <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / co_macrorregiao),
 fit_uf <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf), 
              data = num_cases[NCDR > 0 & log(NCDR) > -5.5])
 
+fit_br <- lm(log(NCDR) ~ nu_ano , 
+             data = num_cases[NCDR > 0 & log(NCDR) > -5.5])
+
 new_data <- make_newdata(num_cases, 50)
-
-
 
 macro_pred <- fit_ci(fit_macro, new_data)
 
 uf_pred <- fit_ci(fit_uf, new_data)
+
+br_pred <- fit_ci(fit_br, new_data)
+
 
 macro_plot(num_cases, macro_pred, "TO")
 uf_plot(num_cases, uf_pred, "NORTE")
@@ -188,5 +192,3 @@ uf_plot(num_cases, uf_pred, "NORTE")
 #for(region in num_cases[,.GRP, by = no_regiao_brasil][, no_regiao_brasil]){
 #  uf_plot(region)
 #}
-?get_predicted_ci
-
