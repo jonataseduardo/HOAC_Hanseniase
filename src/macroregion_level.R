@@ -59,6 +59,7 @@ macro_plot <-
                   ),
               alpha = 0.3,
               size = 1, 
+              symbol = 5,
               ) + 
     geom_line(aes(x=nu_ano, 
                   y = fit,
@@ -81,7 +82,7 @@ uf_plot <-
   function(data, region){
   data_plot <- data[no_regiao_brasil == region]
   data_m <- 
-    data_plot[, .(NCDR = mean(NCDR)), by = .(grupo, sg_uf, nu_ano)]
+    data_plot[, .(mean(.SD)), by = .(grupo, sg_uf, nu_ano)]
   ggplot(data_plot) +
     guides(alpha = FALSE, fill="none", color=FALSE) + 
     xlab(label = "Ano 20--") + 
@@ -95,6 +96,7 @@ uf_plot <-
                   ),
               alpha = 0.9,
               size = 2, 
+              symbol = 19,
               ) + 
     geom_point(aes(x = nu_ano,
                    y = NCDR,
@@ -119,6 +121,8 @@ uf_plot <-
     facet_wrap(~sg_uf)
   }
 
+
+
 eval_num_cases <-
 	function(data, 
            col_usuario, 
@@ -126,7 +130,10 @@ eval_num_cases <-
            groupby = c("no_regiao_brasil", "sg_uf", "no_macrorregiao", "nu_ano")
            ){
     num_cases <- 
-      data[, .(NCDR = 100000 * sum(get(col_usuario)) / sum(get(col_populacao))), 
+      data[, .(NCDR = 100000 * sum(get(col_usuario)) / sum(get(col_populacao)),
+               qtd_usuario = sum(get(col_usuario)),
+               qtd_populacao = sum(get(col_populacao))
+               ), 
           keyby = groupby]
 	return(num_cases)
 	}
@@ -155,40 +162,6 @@ merge_fit_and_data <-
            ){
     return(raw_data[fit_data, on = keys])
   }
-
-# conexao com o SGBD
-pgcon <- DBI::dbConnect(
-  dbDriver(drvName = "PostgreSQL"),
-  dbname = "hanseniase",
-  host = "177.85.160.74",
-  port = 5432,
-  user = 'hans',
-  password = "XrtgWA496lf1P4gt"
-)
-
-data_full <- 
-  dbGetQuery(pgcon, "select * from public.vw_hanseniase_categorizado_municipio") |> 
-  data.table()
-
-#removed NA sg_uf
-data <- 
-  data_full[!is.na(sg_uf) & !is.na(no_macrorregiao) & nu_ano_dt_notific < 2020]
-data[, nu_ano := nu_ano_dt_notific - min(nu_ano_dt_notific)]
-data[, no_macrorregiao := factor(paste0(no_macrorregiao, ' (', sg_uf, ')'))]
-data[, no_macrorregiao := gsub("^(Macrorregião|Macrorregional)(.+)$","\\2", no_macrorregiao )]
-data[sg_uf == 'AC', no_macrorregiao := 'Única (AC)']
-data[, co_macrorregiao := factor(co_macrorregiao)]
-#data[, .GRP, no_macrorregiao1]
-
-
-#num_cases  <- eval_num_cases(data,"qt_usuario", "qt_populacao")
-#num_cases  <- eval_num_cases(data, "qt_classopera_multibacilar", "qt_populacao") 
-num_cases  <- eval_num_cases(data, "qt_usuario_f", "qt_populacao") 
-num_cases  <- eval_num_cases(data, "qt_usuario_m", "qt_populacao") 
-#num_cases  <- eval_num_cases(data, "qt_usuario_tpalta_cura", "qt_populacao") 
-#num_cases  <- eval_num_cases(data, "qt_usuario_00a14", "qt_populacao00a14") 
-#num_cases  <- eval_num_cases(data, "qt_usuario_20a59", "qt_populacao20a59") 
-#num_cases  <- eval_num_cases(data, "qt_classopera_paucibacilar", "qt_populacao") #all zeros
 
 pipeline <- 
   function(data, 
@@ -219,6 +192,36 @@ pipeline <-
   return(fit_result[])
   }
 
+# conexao com o SGBD
+pgcon <- DBI::dbConnect(
+  dbDriver(drvName = "PostgreSQL"),
+  dbname = "hanseniase",
+  host = "177.85.160.74",
+  port = 5432,
+  user = 'hans',
+  password = "XrtgWA496lf1P4gt"
+)
+
+data_full <- 
+  dbGetQuery(pgcon, "select * from public.vw_hanseniase_categorizado_municipio") |> 
+  data.table()
+
+
+#removed NA sg_uf
+data <- 
+  data_full[!is.na(sg_uf) & !is.na(no_macrorregiao) & nu_ano_dt_notific < 2020]
+data[, nu_ano := nu_ano_dt_notific - min(nu_ano_dt_notific)]
+data[, no_macrorregiao := factor(paste0(no_macrorregiao, ' (', sg_uf, ')'))]
+data[, no_macrorregiao := gsub("^(Macrorregião|Macrorregional)(.+)$","\\2", no_macrorregiao )]
+data[sg_uf == 'AC', no_macrorregiao := 'Única (AC)']
+data[, co_macrorregiao := factor(co_macrorregiao)]
+#data[, .GRP, no_macrorregiao1]
+
+
+#num_cases  <- eval_num_cases(data,"qt_usuario", "qt_populacao")
+
+
+
 uf_sex <- 
   rbindlist(list(
     pipeline(data, 'uf', 'qt_usuario_m', 'qt_populacao_m', 'm'),
@@ -230,7 +233,6 @@ macro_sex <-
     pipeline(data, 'macro', 'qt_usuario_m', 'qt_populacao_m', 'm'),
     pipeline(data, 'macro', 'qt_usuario_f', 'qt_populacao_f', 'f')
     ))
-
 
 macro_idade <- 
   rbindlist(list(
@@ -246,17 +248,73 @@ macro_diag <-
     pipeline(data, 'macro', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
     ))
 
+br_diag <- 
+  rbindlist(list(
+    #pipeline(data, 'br', 'qt_usuario', 'qt_populacao_m', 'Total'),
+    pipeline(data, 'br', 'qt_classopera_paucibacilar', 'qt_populacao', 'Paucibacilar'),
+    pipeline(data, 'br', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
+    ))
 
-uf_data <- pipeline(data, 'uf', 'qt_usuario', 'qt_populacao', 'total')
-br_data <- pipeline(data, 'br', 'qt_usuario', 'qt_populacao', 'total')
+
+data_full
+br_fit <- pipeline(data, 'br', 'qt_usuario', 'qt_populacao', 'total')
+br_total <- eval_num_cases(data, 'qt_usuario', 'qt_populacao', groupby = c('nu_ano'))  
+br_total[, grupo := 'total']
 
 
-br_data <- merge_fit_and_data(br_pred, num_cases)
+br_plot <- 
+  function(data){
 
+    data_plot <- 
+      data[, lapply(.SD, mean, na.rm = TRUE), by = .(grupo, sg_uf, nu_ano), 
+              .SDcols = c("NCDR", "SE", "fit", "upr", "lwr")]
+    data_m <- data[, .(NCDR = 100000 * sum(qtd_usuario) / sum(qtd_populacao)), by = .(grupo, nu_ano)]
 
-macro_plot(macro_sex, "MG")
-macro_plot(macro_idade, "MG")
-macro_plot(macro_diag, "BA")
+  ggplot(data_plot) +
+    guides(alpha = FALSE, fill="none", color=FALSE) + 
+    xlab(label = "Ano 20--") + 
+    ylab(label = "Número de novos diagnosticos por 100.000 habitantes") + 
+    theme_pubr() + 
+    theme(axis.text.x=element_text(angle=45, hjust=1)) + 
+    geom_point(data = data_m, 
+               aes(x = nu_ano,
+                   y = NCDR,
+                   color = grupo
+                  ),
+              alpha = 0.9,
+              size = 2, 
+              symbol = 19,
+              ) + 
+    geom_point(aes(x = nu_ano,
+                   y = NCDR,
+                   color = grupo
+                  ),
+              alpha = 0.2,
+              size = 1, 
+              symbol = 3,
+              ) + 
+    geom_line(aes(x=nu_ano, 
+                  y = fit,
+                  color = grupo
+                  )
+              )+ 
+    geom_ribbon(aes(
+                  x=nu_ano, 
+                  ymin = lwr, 
+                  ymax = upr,
+                  fill = grupo
+                  ),
+              alpha = 0.1
+              ) 
+  }
+
+br_fit[, sum(qtd_populacao), nu_ano]
+
+br_plot(br_fit)
+
+macro_plot(macro_sex, "TO")
+macro_plot(macro_idade, "TO")
+macro_plot(macro_diag, "TO")
 
 uf_plot(uf_sex, "SUDESTE")
 uf_plot(uf_sex, "NORTE")
