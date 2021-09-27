@@ -88,7 +88,7 @@ uf_plot <-
   data_plot <- data[sg_uf == uf]
   g <- 
     fit_plot(data_plot) + 
-    facet_wrap(~no_macrorregiao)
+    facet_wrap(~no_macrorregiao, scales = 'free_y')
   return(g)
   }
 
@@ -97,7 +97,7 @@ region_plot <-
     data_plot <- data[no_regiao_brasil == region]
     g <- 
       fit_plot(data_plot) + 
-      facet_wrap(~sg_uf)
+      facet_wrap(~sg_uf, scales = 'free_y' )
     return(g)
   }
 
@@ -223,7 +223,7 @@ uf_total <-
     pipeline(data, 'uf', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
 
 macro_total <- 
-    pipeline(data, 'br', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
+    pipeline(data, 'macro', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
 
 
 # Previsão diferentes sexos
@@ -249,16 +249,16 @@ macro_sex <-
 
 br_idade <- 
   rbindlist(list(
-    pipeline(data, 'macro', 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos'),
-    pipeline(data, 'macro', 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 20 e 59'),
-    pipeline(data, 'macro', 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
+    pipeline(data, 'br', 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos'),
+    pipeline(data, 'br', 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 20 e 59'),
+    pipeline(data, 'br', 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
     ))
 
 uf_idade <- 
   rbindlist(list(
-    pipeline(data, 'macro', 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos'),
-    pipeline(data, 'macro', 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 20 e 59'),
-    pipeline(data, 'macro', 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
+    pipeline(data, 'uf', 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos'),
+    pipeline(data, 'uf', 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 20 e 59'),
+    pipeline(data, 'uf', 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
     ))
 
 macro_idade <- 
@@ -276,7 +276,7 @@ br_diag <-
     pipeline(data, 'br', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
     ))
 
-macro_diag <- 
+uf_diag <- 
   rbindlist(list(
     pipeline(data, 'uf', 'qt_classopera_paucibacilar', 'qt_populacao', 'Paucibacilar'),
     pipeline(data, 'uf', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
@@ -293,13 +293,16 @@ macro_diag <-
 
 fit_plot(br_total)
 fit_plot(br_sex)
+fit_plot(br_idade)
 fit_plot(br_diag)
 
+region_plot(uf_total, "NORTE")
+region_plot(uf_sex, "NORTE")
+region_plot(uf_idade, "NORTE")
+region_plot(uf_diag, "NORTE")
+
 uf_plot(macro_total, "TO")
-uf_plot(macro_sex, "SP")
+uf_plot(macro_sex, "TO")
 uf_plot(macro_idade, "TO")
 uf_plot(macro_diag, "TO")
 
-region_plot(uf_sex, "SUDESTE")
-region_plot(uf_sex, "NORTE")
-region_plot(uf_sex, "SUL")
