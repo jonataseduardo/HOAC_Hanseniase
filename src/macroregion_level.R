@@ -56,7 +56,9 @@ fit_plot <-
         xlab(label = "Ano 20--") + 
         ylab(label = "Número de novos diagnosticos por 100.000 habitantes") + 
         theme_pubr() + 
-        theme(axis.text.x=element_text(angle=45, hjust=1)) + 
+        theme(axis.text.x=element_text(angle=45, hjust=1),
+              legend.title = element_blank()
+              ) + 
         geom_point(aes(x = nu_ano,
                       y = NCDR,
                       color = grupo
@@ -210,9 +212,26 @@ data[, no_macrorregiao := factor(paste0(no_macrorregiao, ' (', sg_uf, ')'))]
 data[, no_macrorregiao := gsub("^(Macrorregião|Macrorregional)(.+)$","\\2", no_macrorregiao )]
 data[sg_uf == 'AC', no_macrorregiao := 'Única (AC)']
 data[, co_macrorregiao := factor(co_macrorregiao)]
-#data[, .GRP, no_macrorregiao1]
 
-#num_cases  <- eval_num_cases(data,"qt_usuario", "qt_populacao")
+
+# Previsão Total de Diaginósticos
+
+br_total <- 
+    pipeline(data, 'br', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
+
+uf_total <- 
+    pipeline(data, 'uf', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
+
+macro_total <- 
+    pipeline(data, 'br', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
+
+
+# Previsão diferentes sexos
+br_sex <- 
+  rbindlist(list(
+    pipeline(data, 'br', 'qt_usuario_m', 'qt_populacao_m', 'M'),
+    pipeline(data, 'br', 'qt_usuario_f', 'qt_populacao_f', 'F')
+    ))
 
 uf_sex <- 
   rbindlist(list(
@@ -226,6 +245,22 @@ macro_sex <-
     pipeline(data, 'macro', 'qt_usuario_f', 'qt_populacao_f', 'F')
     ))
 
+# Previsão diferentes idades
+
+br_idade <- 
+  rbindlist(list(
+    pipeline(data, 'macro', 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos'),
+    pipeline(data, 'macro', 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 20 e 59'),
+    pipeline(data, 'macro', 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
+    ))
+
+uf_idade <- 
+  rbindlist(list(
+    pipeline(data, 'macro', 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos'),
+    pipeline(data, 'macro', 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 20 e 59'),
+    pipeline(data, 'macro', 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
+    ))
+
 macro_idade <- 
   rbindlist(list(
     pipeline(data, 'macro', 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos'),
@@ -233,24 +268,34 @@ macro_idade <-
     pipeline(data, 'macro', 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
     ))
 
-macro_diag <- 
-  rbindlist(list(
-    pipeline(data, 'macro', 'qt_usuario', 'qt_populacao_m', 'Total'),
-    pipeline(data, 'macro', 'qt_classopera_paucibacilar', 'qt_populacao', 'Paucibacilar'),
-    pipeline(data, 'macro', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
-    ))
+# Previsão dieferentes diagnosticos 
 
 br_diag <- 
   rbindlist(list(
-    #pipeline(data, 'br', 'qt_usuario', 'qt_populacao_m', 'Total'),
     pipeline(data, 'br', 'qt_classopera_paucibacilar', 'qt_populacao', 'Paucibacilar'),
     pipeline(data, 'br', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
     ))
 
+macro_diag <- 
+  rbindlist(list(
+    pipeline(data, 'uf', 'qt_classopera_paucibacilar', 'qt_populacao', 'Paucibacilar'),
+    pipeline(data, 'uf', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
+    ))
+
+macro_diag <- 
+  rbindlist(list(
+    pipeline(data, 'macro', 'qt_classopera_paucibacilar', 'qt_populacao', 'Paucibacilar'),
+    pipeline(data, 'macro', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
+    ))
 
 
+
+
+fit_plot(br_total)
+fit_plot(br_sex)
 fit_plot(br_diag)
 
+uf_plot(macro_total, "TO")
 uf_plot(macro_sex, "SP")
 uf_plot(macro_idade, "TO")
 uf_plot(macro_diag, "TO")
