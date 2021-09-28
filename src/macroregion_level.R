@@ -29,12 +29,12 @@ coef_to_DF <-
   }
 
 make_newdata <- 
-  function(num_cases, 
-           n_anos, 
+  function(num_cases,
+           n_anos,
            groupby = c("sg_uf", "no_macrorregiao", "no_regiao_brasil")
            ){
     if(length(groupby) > 0){
-      new_data <- 
+      new_data <-
         replicate(n_anos + 1, 
                   num_cases[, .GRP, by = groupby], 
                   simplify=FALSE) |> 
@@ -118,9 +118,34 @@ eval_num_cases <-
 	}
 
 fit_ci <- 
-  function(fit, new_data){
-    pred <- predict(fit, newdata=new_data, allow.new.levels=TRUE) 
-    ci <- get_predicted_ci(fit, pred, data = new_data, ci_type = "prediction") |> data.table()
+  function(fit, new_data, nivel){
+    if(nivel == "macro"){
+      pred <- predict(fit, newdata=new_data, re.form = NULL, allow.new.levels=TRUE) 
+      ci <- 
+        get_predicted_ci(fit, 
+                         pred, 
+                         re.form = NULL, 
+                         data = new_data, 
+                         ci_type = "prediction") |> data.table()
+    }
+    if(nivel == "uf"){
+      pred <- predict(fit, newdata=new_data, re.form = ~(1|sg_uf), allow.new.levels=TRUE) 
+      ci <- 
+        get_predicted_ci(fit, 
+                         pred, 
+                         re.form = ~(1|sg_uf), 
+                         data = new_data, 
+                         ci_type = "prediction") |> data.table()
+    }
+    if(nivel == "br"){
+      pred <- predict(fit, newdata=new_data, re.form = ~0, allow.new.levels=TRUE) 
+      ci <- get_predicted_ci(fit, 
+                             pred, 
+                             re.form = ~0, 
+                             data = 
+                             new_data, 
+                             ci_type = "prediction") |> data.table()
+    }
     pred <- pred |> data.table()
     ci_pred  <- cbind(pred, ci)
     ci_pred[, fit := exp(pred)]
@@ -149,41 +174,59 @@ pipeline <-
            col_populacao,
            label){
 
-  #num_cases  <- eval_num_cases(data, col_usuario, col_populacao) 
+  #Debug example 
+  #@col_usuario = 'qt_usuario'
+  #@col_populacao = 'qt_populacao'
+  #@groupby = c("sg_uf", "no_macrorregiao", "no_regiao_brasil")
+  num_cases  <- eval_num_cases(data, col_usuario, col_populacao) 
+  fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / no_macrorregiao), 
+              data = num_cases[NCDR > 0])
 
+  groupby = c("no_regiao_brasil", "sg_uf", "no_macrorregiao")
   if(nivel == 'macro'){
-    groupby = c("no_regiao_brasil", "sg_uf", "no_macrorregiao")
-    num_cases  <- 
-      eval_num_cases(data, 
-                     col_usuario, 
-                     col_populacao, 
-                     groupby = c(groupby, "nu_ano")) 
-    fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / no_macrorregiao), 
-                data = num_cases[NCDR > 0])
+    #groupby = c("no_regiao_brasil", "sg_uf", "no_macrorregiao")
+    new_data <- make_newdata(num_cases, 50, groupby = groupby)
+    pred_data <- fit_ci(fit, new_data, nivel)
+    #num_cases  <- 
+    #  eval_num_cases(data, 
+    #                 col_usuario, 
+    #                 col_populacao, 
+    #                 groupby = c(groupby, "nu_ano")) 
+    #fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / no_macrorregiao), 
+    #            data = num_cases[NCDR > 0])
   } 
   if(nivel == 'uf'){
-    groupby = c("no_regiao_brasil", "sg_uf")
-    num_cases  <- 
-      eval_num_cases(data, 
-                     col_usuario, 
-                     col_populacao, 
-                     groupby = c(groupby, "nu_ano")) 
-    fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf), 
-                data = num_cases[NCDR > 0 ])
+    #groupby = c("no_regiao_brasil", "sg_uf")
+    new_data <- make_newdata(num_cases, 50, groupby = groupby)
+    pred_data <- fit_ci(fit, new_data, nivel)
+    #num_cases  <- 
+    #  eval_num_cases(data, 
+    #                 col_usuario, 
+    #                 col_populacao, 
+    #                 groupby = c(groupby, "nu_ano")) 
+    #fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf), 
+    #            data = num_cases[NCDR > 0 ])
   }
   if(nivel == 'br'){
-    groupby = c()
-    num_cases  <- 
-      eval_num_cases(data, 
-                     col_usuario, 
-                     col_populacao, 
-                     groupby = c(groupby, "nu_ano")) 
-    fit <- lm(log(NCDR) ~ nu_ano ,
-              data = num_cases[NCDR > 0])
+    #groupby = c()
+    new_data <- make_newdata(num_cases, 50, groupby = groupby)
+    pred_data <- fit_ci(fit, new_data, nivel)
+    #num_cases  <- 
+    #  eval_num_cases(data, 
+    #                 col_usuario, 
+    #                 col_populacao, 
+    #                 groupby = c(groupby, "nu_ano")) 
+    #fit <- lm(log(NCDR) ~ nu_ano ,
+    #          data = num_cases[NCDR > 0])
   }
 
-  new_data <- make_newdata(num_cases, 50, groupby = groupby)
-  pred_data <- fit_ci(fit, new_data)
+
+  #coef(fit)
+  #get_parameters(fit)
+  #get_random(fit)
+
+  #new_data <- make_newdata(num_cases, 50, groupby = groupby)
+  #pred_data <- fit_ci(fit, new_data)
   fit_result <- merge_fit_and_data(pred_data, num_cases, keys = c(groupby, "nu_ano"))
   fit_result[, grupo := label]
   return(fit_result[])
@@ -215,6 +258,16 @@ data[, co_macrorregiao := factor(co_macrorregiao)]
 
 
 # Previsão Total de Diaginósticos
+br_total[,NCDR := NULL]
+col_usuario = 'qt_usuario'
+col_populacao = 'qt_populacao'
+br_total
+br_total1 <- br_total[, .(NCDR = 100000 * sum(qtd_usuario) / sum(qtd_populacao)),
+                      by = .(SE, fit, upr, lwr, grupo, nu_ano)]
+
+
+
+fit_plot(br_total1)
 
 br_total <- 
     pipeline(data, 'br', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
@@ -290,19 +343,28 @@ macro_diag <-
 
 
 
+# Total
 
+## Brasil
 fit_plot(br_total)
+
+## Região
+region_plot(uf_total, "NORTE")
+
+## Estado
+uf_plot(macro_total, "TO")
+
+
 fit_plot(br_sex)
 fit_plot(br_idade)
 fit_plot(br_diag)
 
-region_plot(uf_total, "NORTE")
 region_plot(uf_sex, "NORTE")
 region_plot(uf_idade, "NORTE")
 region_plot(uf_diag, "NORTE")
 
-uf_plot(macro_total, "TO")
+uf_plot(macro_total, "MG")
 uf_plot(macro_sex, "TO")
 uf_plot(macro_idade, "TO")
-uf_plot(macro_diag, "TO")
+uf_plot(macro_diag, "MT")
 
