@@ -101,7 +101,6 @@ region_plot <-
     return(g)
   }
 
-
 eval_num_cases <-
 	function(data, 
            col_usuario, 
@@ -129,11 +128,11 @@ fit_ci <-
                          ci_type = "prediction") |> data.table()
     }
     if(nivel == "uf"){
-      pred <- predict(fit, newdata=new_data, re.form = ~(1|sg_uf), allow.new.levels=TRUE) 
+      pred <- predict(fit, newdata=new_data, re.form = ~ nu_ano + (1 + nu_ano|sg_uf) , allow.new.levels=TRUE) 
       ci <- 
         get_predicted_ci(fit, 
                          pred, 
-                         re.form = ~(1|sg_uf), 
+                         re.form = ~ nu_ano + (1 + nu_ano|sg_uf), 
                          data = new_data, 
                          ci_type = "prediction") |> data.table()
     }
@@ -175,60 +174,40 @@ pipeline <-
            label){
 
   #Debug example 
-  #@col_usuario = 'qt_usuario'
-  #@col_populacao = 'qt_populacao'
-  #@groupby = c("sg_uf", "no_macrorregiao", "no_regiao_brasil")
+  #col_usuario = 'qt_usuario'
+  #col_populacao = 'qt_populacao'
+  #groupby = c("sg_uf", "no_macrorregiao", "no_regiao_brasil")
   num_cases  <- eval_num_cases(data, col_usuario, col_populacao) 
-  fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / no_macrorregiao), 
+  fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano || sg_uf / no_macrorregiao), 
               data = num_cases[NCDR > 0])
 
-  groupby = c("no_regiao_brasil", "sg_uf", "no_macrorregiao")
+  groupby_all = c("no_regiao_brasil", "sg_uf", "no_macrorregiao")
   if(nivel == 'macro'){
-    #groupby = c("no_regiao_brasil", "sg_uf", "no_macrorregiao")
-    new_data <- make_newdata(num_cases, 50, groupby = groupby)
+    groupby = c("no_regiao_brasil", "sg_uf", "no_macrorregiao")
+    new_data <- make_newdata(num_cases, 50, groupby = groupby_all)
     pred_data <- fit_ci(fit, new_data, nivel)
-    #num_cases  <- 
-    #  eval_num_cases(data, 
-    #                 col_usuario, 
-    #                 col_populacao, 
-    #                 groupby = c(groupby, "nu_ano")) 
-    #fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf / no_macrorregiao), 
-    #            data = num_cases[NCDR > 0])
   } 
   if(nivel == 'uf'){
-    #groupby = c("no_regiao_brasil", "sg_uf")
-    new_data <- make_newdata(num_cases, 50, groupby = groupby)
+    groupby = c("no_regiao_brasil", "sg_uf")
+    new_data <- make_newdata(num_cases, 50, groupby = groupby_all)
     pred_data <- fit_ci(fit, new_data, nivel)
-    #num_cases  <- 
-    #  eval_num_cases(data, 
-    #                 col_usuario, 
-    #                 col_populacao, 
-    #                 groupby = c(groupby, "nu_ano")) 
-    #fit <- lmer(log(NCDR) ~ nu_ano + (1 + nu_ano | sg_uf), 
-    #            data = num_cases[NCDR > 0 ])
   }
   if(nivel == 'br'){
-    #groupby = c()
-    new_data <- make_newdata(num_cases, 50, groupby = groupby)
+    groupby = c()
+    new_data <- make_newdata(num_cases, 50, groupby = groupby_all)
     pred_data <- fit_ci(fit, new_data, nivel)
-    #num_cases  <- 
-    #  eval_num_cases(data, 
-    #                 col_usuario, 
-    #                 col_populacao, 
-    #                 groupby = c(groupby, "nu_ano")) 
-    #fit <- lm(log(NCDR) ~ nu_ano ,
-    #          data = num_cases[NCDR > 0])
   }
 
-
-  #coef(fit)
-  #get_parameters(fit)
-  #get_random(fit)
-
-  #new_data <- make_newdata(num_cases, 50, groupby = groupby)
-  #pred_data <- fit_ci(fit, new_data)
-  fit_result <- merge_fit_and_data(pred_data, num_cases, keys = c(groupby, "nu_ano"))
+  fit_result <- 
+    merge_fit_and_data(pred_data, 
+                       num_cases, 
+                       keys = 
+                         c(groupby_all, "nu_ano"))
   fit_result[, grupo := label]
+  if(nivel == 'br' || nivel == 'uf'){
+    fit_result <- fit_result[, .(NCDR = 100000 * sum(qtd_usuario) / sum(qtd_populacao)),
+                          by = c(groupby, c("nu_ano", "SE", "fit", "upr", "lwr", "grupo"))]
+  }
   return(fit_result[])
   }
 
@@ -258,16 +237,6 @@ data[, co_macrorregiao := factor(co_macrorregiao)]
 
 
 # Previsão Total de Diaginósticos
-br_total[,NCDR := NULL]
-col_usuario = 'qt_usuario'
-col_populacao = 'qt_populacao'
-br_total
-br_total1 <- br_total[, .(NCDR = 100000 * sum(qtd_usuario) / sum(qtd_populacao)),
-                      by = .(SE, fit, upr, lwr, grupo, nu_ano)]
-
-
-
-fit_plot(br_total1)
 
 br_total <- 
     pipeline(data, 'br', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
@@ -277,7 +246,6 @@ uf_total <-
 
 macro_total <- 
     pipeline(data, 'macro', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
-
 
 # Previsão diferentes sexos
 br_sex <- 
@@ -340,8 +308,6 @@ macro_diag <-
     pipeline(data, 'macro', 'qt_classopera_paucibacilar', 'qt_populacao', 'Paucibacilar'),
     pipeline(data, 'macro', 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
     ))
-
-
 
 # Total
 
