@@ -168,7 +168,10 @@ fit_pipeline <-
     fit_result <- fit_result[, .(NCDR = 100000 * sum(qtd_usuario) / sum(qtd_populacao)),
                           by = c(groupby, c("nu_ano", "SE", "fit", "upr", "lwr", "grupo"))]
   }
-  return(list(fit_result[], fit))
+
+  fit_coef <- coef_to_datatable(fit, nivel)
+
+  return(list(fit_result[], fit_coef, fit))
   }
 
 # Plot dos dados brutos e fit

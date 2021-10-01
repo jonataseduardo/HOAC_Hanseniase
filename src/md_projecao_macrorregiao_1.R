@@ -26,10 +26,69 @@ data <- read_and_preparedata()
 
 # Brasil
 
-br_total <- 
-    fit_pipeline(data, 'br', 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
 
-fit_plot(br_total_data)
+if(grouping == 'total'){
+  fit_result <- 
+      pipeline(data, level, 'qt_usuario', 'qt_populacao', 'Total de Diagnósticos')
+
+  fit_data <- fit_result[[1]]
+  fit_coef <- fit_result[[2]]
+  fit_model <- fit_result[[3]]
+}
+
+if(grouping == 'sexo'){
+  fit_result_m <- 
+    fit_pipeline(data, level, 'qt_usuario_m', 'qt_populacao_m', 'M')
+  fit_result_f <- 
+    fit_pipeline(data, level, 'qt_usuario_f', 'qt_populacao_f', 'F')
+
+  fit_data <- 
+    rbindlist(list(fit_result_m[[1]], fit_result_f[[1]]))
+
+  fit_coef <- 
+    rbindlist(list(fit_result_m[[2]], fit_result_f[[2]]))
+
+  fit_model <- 
+    list(fit_result_m[[3]], fit_result_f[[3]])
+}
+
+if(grouping == 'idade'){
+  fit_result_00_14 <- 
+    fit_pipeline(data, level, 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos')
+  fit_result_15_59 <- 
+    fit_pipeline(data, level, 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 20 e 59'),
+  fit_result_60_00 <- 
+    fit_pipeline(data, level, 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
+
+  fit_data <- 
+    rbindlist(list(fit_result_00_14[[1]], fit_result_15_59[[1]], fit_result_59_00[[1]]))
+
+  fit_coef <- 
+    rbindlist(list(fit_result_00_14[[2]], fit_result_15_59[[2]], fit_result_59_00[[2]]))
+
+  fit_model <- 
+    list(fit_result_00_14[[3]], fit_result_15_59[[3]], fit_result_59_00[[3]])
+}
+
+if(grouping == 'diag'){
+  fit_result_pa <- 
+    fit_pipeline(data, level, 'qt_classopera_paucibacilar', 'qt_populacao', 'Paucibacilar'),
+  fit_result_mu <- 
+    fit_pipeline(data, level, 'qt_classopera_multibacilar', 'qt_populacao', 'Multibacilar')
+
+  fit_data <- 
+    rbindlist(list(fit_result_pa[[1]], fit_result_mu[[1]]))
+
+  fit_coef <- 
+    rbindlist(list(fit_result_pa[[1]], fit_result_mu[[1]]))
+
+  fit_model <- 
+    list(fit_result_pa[[1]], fit_result_mu[[1]])
+}
+
+
+
+fit_plot(fit_data)
 
 # Regiao 
 
