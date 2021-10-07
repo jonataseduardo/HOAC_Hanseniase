@@ -169,7 +169,7 @@ fit_pipeline <-
                           by = c(groupby, c("nu_ano", "SE", "fit", "upr", "lwr", "grupo"))]
   }
 
-  fit_coef <- coef_to_datatable(fit, nivel)
+  fit_coef <- coef_to_datatable(fit, nivel)[, grupo := label]
 
   return(list(fit_result[], fit_coef, fit))
   }
@@ -245,13 +245,13 @@ fit_plot <-
     g <- 
       ggplot(data) +
         guides(alpha = FALSE) + 
-        xlab(label = "Ano 20--") + 
+        xlab(label = "Ano") + 
         ylab(label = "Número de novos diagnosticos por 100.000 habitantes") + 
         theme_pubr() + 
         theme(axis.text.x=element_text(angle=45, hjust=1),
               legend.title = element_blank()
               ) + 
-        geom_point(aes(x = nu_ano,
+        geom_point(aes(x = nu_ano + 2001,
                       y = NCDR,
                       color = grupo
                       ),
@@ -259,13 +259,13 @@ fit_plot <-
                   size = 2, 
                   symbol = 3,
                   ) + 
-        geom_line(aes(x=nu_ano, 
+        geom_line(aes(x=nu_ano + 2001, 
                       y = fit,
                       color = grupo
                       )
                   )+ 
         geom_ribbon(aes(
-                      x=nu_ano, 
+                      x=nu_ano + 2001, 
                       ymin = lwr, 
                       ymax = upr,
                       fill = grupo
