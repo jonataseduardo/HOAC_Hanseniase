@@ -13,30 +13,43 @@ library(RPostgreSQL) # SGBD PostgreSQL no R
 #install.packages(c("data.table","ggplot2", "insight", "ggpubr", "ggrepel", "RPostgreSQL"))
 #install.packages("tidymodels")
 
-#Cria tabela com valores dos efeitos fixos e aleatórios
+# Cria tabela com valores dos efeitos fixos e aleatórios considerando 
+# o modelo de decaimento exponencial. O número inicial de casos é repassado como N0
+# e a taxa de decaimento em porcentagem é repassada como R0. 
 coef_to_datatable <-
-  function(fit, nivel){
+  function(fit, data, nivel){
 
     if(nivel == 'macro'){
       res <- coef(fit)[["no_macrorregiao:sg_uf"]]
       res1 <- data.table(res)
-      new_names <- c('Intercept', 'R0')
+      new_names <- c('N0', 'R0')
       names(res1) <- new_names
       res1[, c("no_macrorregiao", "sg_uf") := tstrsplit(rownames(res), ":")]
+      fit_coef <- 
+        data[, .GRP, by = .(no_regiao_brasil, sg_uf, no_macrorregiao )
+            ][, .(no_regiao_brasil, sg_uf, no_macrorregiao)
+            ][res1, on = .(sg_uf, no_macrorregiao)
+            ][, .(no_regiao_brasil, sg_uf, no_macrorregiao, N0, R0)]
     }
     if(nivel == 'uf'){
       res <- coef(fit)[["sg_uf"]]
       res1 <- data.table(res)
-      new_names <- c('Intercept', 'R0')
+      new_names <- c('N0', 'R0')
       names(res1) <- new_names
       res1[, sg_uf := rownames(res)]
+      fit_coef <- 
+        data[, .GRP, by = .(no_regiao_brasil, sg_uf)
+            ][, .(no_regiao_brasil, sg_uf)
+            ][res1, on = .(sg_uf)
+            ][, .(no_regiao_brasil, sg_uf, N0, R0)]
     }
     if(nivel == 'br'){
-      res1 <- fixef(fit)|> t() |> data.table()
-      new_names <- c('Intercept', 'R0')
-      names(res1) <- new_names
+      fit_coef <- fixef(fit)|> t() |> data.table()
+      new_names <- c('N0', 'R0')
+      names(fit_coef) <- new_names
     }
-    return(res1[])
+    fit_coef[, ':='(N0 = exp(N0), R0 = 100*R0)]
+    return(fit_coef)
   }
 
 # Cria conjunto de dados anuas e de região para predićão
@@ -169,9 +182,12 @@ fit_pipeline <-
                           by = c(groupby, c("nu_ano", "SE", "fit", "upr", "lwr", "grupo"))]
   }
 
-  fit_coef <- coef_to_datatable(fit, nivel)[, grupo := label]
+  fit_result[, nu_ano := nu_ano + 2001]
 
-  return(list(fit_result[], fit_coef, fit))
+  fit_coef <- 
+    coef_to_datatable(fit, data, nivel)[, grupo := label]
+
+  return(list(fit_result[], fit_coef[], fit))
   }
 
 # Seleciona regiao e agrupamento de dados para calculo de predićão. 
@@ -251,7 +267,7 @@ fit_plot <-
         theme(axis.text.x=element_text(angle=45, hjust=1),
               legend.title = element_blank()
               ) + 
-        geom_point(aes(x = nu_ano + 2001,
+        geom_point(aes(x = nu_ano,
                       y = NCDR,
                       color = grupo
                       ),
@@ -259,13 +275,13 @@ fit_plot <-
                   size = 2, 
                   symbol = 3,
                   ) + 
-        geom_line(aes(x=nu_ano + 2001, 
+        geom_line(aes(x=nu_ano, 
                       y = fit,
                       color = grupo
                       )
                   )+ 
         geom_ribbon(aes(
-                      x=nu_ano + 2001, 
+                      x=nu_ano, 
                       ymin = lwr, 
                       ymax = upr,
                       fill = grupo
