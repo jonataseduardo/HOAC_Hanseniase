@@ -23,8 +23,8 @@ Leitura das funções para análise de dados.
 
 ```{r eval=F, message=FALSE, warning=FALSE, include=T, paged.print=FALSE}
 
-source("statistics_utils.R")
 library(knitr)
+source("statistics_utils.R")
 
 ```
 
@@ -37,24 +37,22 @@ data <- read_and_preparedata()
 fit_result <- anlz_pipeline(data, 'br', 'total')
 fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
-
 fit_model <- fit_result[[3]]
 
 O número total de diagnósticos de hanseniase no Brasil apresenta uma tendencia
-consistente de queda, com uma taxa de queda anual de  - 100 *  fit_coef[, R0] %,
-stimada a partir do efeito fixo do modelo.
+de queda, com uma taxa anual de  - fit_coef[, R0] %, estimada a partir do
+efeito fixo do modelo.
 
-Para o ano de 2030 é previsto  fit_data[nu_ano == 29, .(fit, lwr, upr)] número
+Para o ano de 2030 é previsto  fit_data[nu_ano == 2030, .(fit, lwr, upr)] número
 de diagnóticos por 100 mil habitantes, enquanto para o ano de 2050 é previsto 
-fit_data[nu_ano == 49, .(fit, lwr, upr)].
-
+fit_data[nu_ano == 2050, .(fit, lwr, upr)].
 
 g <- fit_plot(fit_data)
 g + 
  labs(caption = 
 "
 Número de diagnóticos de hanseniase por 100 mil habitates em todo território
-nacional. Os circulos representam total do diagonósticos feitos no Brasil a
+nacional. Os circulos representam total do diagonósticos detectados no Brasil a
 cada ano. Os valores esperados para a número de diagnósticos a cada ano
 érepresentado pela linha contínua sendo a área sobreada o intervalo de predição
 de 95%
@@ -68,34 +66,21 @@ fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
-
 ### Norte
 
-max_ncdr <- fit_data[no_regiao_brasil == "NORTE" & nu_ano == 18, max(NCDR)]
+O número total de diagnósticos de hanseniase na região NORTE apresenta uma
+tendencia de queda, com taxas anuais de cada para cada estado, estimada a
+partir do, efeitos aleatórios do modelo, de:
 
-max_uf <- fit_data[no_regiao_brasil == "NORTE" & nu_ano == 18 & NCDR == max_ncdr, sg_uf]
-
-region_coefs <- 
-  data[, .GRP, by = .(no_regiao_brasil, sg_uf)
-      ][, .(no_regiao_brasil, sg_uf)
-      ][fit_coef, on = .(sg_uf)
-      ][no_regiao_brasil == "NORTE"]
+kable(fit_coef[no_regiao_brasil == 'NORTE', .(sg_uf, R0)], digits = 1)
 
 
-Na região Norte o estado que apresenta o maior número de casos detectados no ano de
-2019 é o max_uf com max_ncdr diagnósticos por cem mil habitantes, sendo sua a taxa de 
-decaimento de novos casos estimado em - 100 * region_coefs[sg_uf == max_uf, R0].
-
-Os interecptos e coeficientes lineares (R0), estimados como efeitos aleatórios do modelo, são:
-
-kable(region_coefs[, .(sg_uf, Intercept, R0 = 100 * R0)], digits=2)
-
-g <- region_plot(fit_data, "NORTE")
+g <- region_plot(fit_data, "CENTRO-OESTE")
 g + 
  labs(caption = 
 "
 Número de diagnóticos de hanseniase por 100 mil habitates na região NORTE. Os
-circulos representam total do diagonósticos feitos no Brasil a cada ano. Os
+circulos representam total do diagonósticos detectados no Brasil a cada ano. Os
 valores esperados para a número de diagnósticos a cada ano érepresentado pela
 linha contínua sendo a área sobreada o intervalo de predição de 95%
 "
@@ -117,18 +102,17 @@ estimados como efeitos aleatórios do modelo, são:
 
 kable(fit_coef[sg_uf == 'TO', .(sg_uf, Intercept, R0 = 100 * R0)], digits=2)
 
-g <- uf_plot(fit_data, "TO")
+g <- uf_plot(fit_data, "DF")
 g + 
  labs(caption = 
 "
 Número de diagnóticos de hanseniase por 100 mil habitates no estado do
-Tocantins. Os circulos representam total do diagonósticos feitos no Brasil a
+Tocantins. Os circulos representam total do diagonósticos detectados no Brasil a
 cada ano. Os valores esperados para a número de diagnósticos a cada ano
 érepresentado pela linha contínua sendo a área sobreada o intervalo de predição
 de 95%
 "
  )
-
 
 # Previsão  Diaginósticos por sexo
 
@@ -138,7 +122,6 @@ fit_result <- anlz_pipeline(data, 'br', 'sexo')
 fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
-fit_coef
 
 fit_plot(fit_data)
 
