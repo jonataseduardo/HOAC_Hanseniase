@@ -180,8 +180,8 @@ fit_model <- fit_result[[3]]
 
 "
 O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
-de queda para ambos sexos, sendo a taxa anual para o sexo masculino de  - fit_coef[group = "M", R0] %
-e para o feminino de - fit_coef[group = "F", R0] %. 
+de queda para ambos sexos, sendo a taxa anual para o sexo masculino de  - fit_coef[grupo == "M", R0] %
+e para o feminino de - fit_coef[grupo == "F", R0] %. 
 Ambas taxas são estimadas a partir do efeitos fixos do modelo.
 "
 
@@ -336,9 +336,9 @@ fit_model <- fit_result[[3]]
 "
 O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
 de queda para diferentes faixas etárias, sendo a taxa anual para crianças de até 14 anos 
-- fit_coef[group = "até 14 anos", R0] %, 
-para jovens e adultos entre 15 e 59 anos - fit_coef[group = "entre 15 e 59 anos", R0] % 
- e para idosos com mais de 60 anos - fit_coef[group = "mais que 60 anos", R0]. 
+- fit_coef[grupo == "até 14 anos", R0] %, 
+para jovens e adultos entre 15 e 59 anos - fit_coef[grupo == "entre 15 e 59 anos", R0] % 
+ e para idosos com mais de 60 anos - fit_coef[grupo == "mais que 60 anos", R0]. 
 Todas as taxas são estimadas a partir do efeitos fixos do modelo.
 "
 
@@ -481,27 +481,26 @@ de 95%
  )
 
 
-# Previsão para diferentes faixas etárias
+# Previsão para diferentes tipos de diagnósticos 
 
 ## Brasil
 
-fit_result <- anlz_pipeline(data, 'br', 'idade')
+fit_result <- anlz_pipeline(data, 'br', 'diag')
 fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
+
 "
 O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
-de queda para diferentes faixas etárias, sendo a taxa anual para crianças de até 14 anos 
-- fit_coef[group = "até 14 anos", R0] %, 
-para jovens e adultos entre 15 e 59 anos - fit_coef[group = "entre 15 e 59 anos", R0] % 
- e para idosos com mais de 60 anos - fit_coef[group = "mais que 60 anos", R0]. 
-Todas as taxas são estimadas a partir do efeitos fixos do modelo.
+de queda para os dois tipos de diagnósticos, Paucibacilar e Multibacilar.  
+A taxa de queda para diagnósticos do tipo paucibacilar - fit_coef[grupo == 'Paucibacilar', R0]%  
+e para diagnósticos do tipo multibacilar é - fit_coef[grupo == 'Paucibacilar', R0]%. 
 "
 
 "
 A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
-as diferentes faixas etárias é:
+ambos os tipos :
 "
 
 kable(
@@ -550,9 +549,9 @@ kable(fit_coef[no_regiao_brasil == region,
               ][, .SD, keyby = c("Estado", "Faixa etária")], 
       digits = 1)
 
-" 
-A previsão para o número de diagnósticos detectados cada faixa etária nos
-anos de 2030 e 2050 em cada um dos estados é: 
+"
+A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+ambos os tipos :
 "
 
 kable(
@@ -602,9 +601,9 @@ kable(fit_coef[sg_uf == uf,
       digits = 1)
 
 
-"
-A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
-as diferentes faixas etárias é:
+" 
+A previsão para o número de diagnósticos detectados cada faixa etária nos
+anos de 2030 e 2050 em cada um dos estados é: 
 "
 
 kable(
