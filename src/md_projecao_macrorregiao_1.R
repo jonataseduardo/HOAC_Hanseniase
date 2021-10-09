@@ -328,29 +328,31 @@ de 95%
 
 ## Brasil
 
-fit_result <- anlz_pipeline(data, 'br', 'sexo')
+fit_result <- anlz_pipeline(data, 'br', 'idade')
 fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
 "
 O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
-de queda para ambos sexos, sendo a taxa anual para o sexo masculino de  - fit_coef[group = "M", R0] %
-e para o feminino de - fit_coef[group = "F", R0] %. 
-Ambas taxas são estimadas a partir do efeitos fixos do modelo.
+de queda para diferentes faixas etárias, sendo a taxa anual para crianças de até 14 anos 
+- fit_coef[group = "até 14 anos", R0] %, 
+para jovens e adultos entre 15 e 59 anos - fit_coef[group = "entre 15 e 59 anos", R0] % 
+ e para idosos com mais de 60 anos - fit_coef[group = "mais que 60 anos", R0]. 
+Todas as taxas são estimadas a partir do efeitos fixos do modelo.
 "
 
 "
 A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
-os diferentes sexo é:
+as diferentes faixas etárias é:
 "
 
 kable(
 fit_data[nu_ano == 2030 | nu_ano == 2050, 
          .(Ano = nu_ano, 
-           Sexo = grupo, 
+           "Faixa etária" = grupo, 
            "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
-         ][, .SD, keyby = .(Sexo, Ano)]
+         ][, .SD, keyby = c("Faixa etária", "Ano")]
 )
 
 
@@ -369,7 +371,7 @@ de 95%.
 
 ## Análise por Regiões
 
-fit_result <- anlz_pipeline(data, 'uf', 'sexo')
+fit_result <- anlz_pipeline(data, 'uf', 'idade')
 fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
@@ -386,13 +388,13 @@ estimada a partir dos efeitos aleatórios do modelo, são:
 
 kable(fit_coef[no_regiao_brasil == region, 
               .(Estado = sg_uf, 
-                Sexo = grupo, 
+                "Faixa etária" = grupo, 
                 "Taxa de queda anual %" = - R0)
-              ][, .SD, keyby = .(Estado, Sexo)], 
+              ][, .SD, keyby = c("Estado", "Faixa etária")], 
       digits = 1)
 
 " 
-A previsão para o número de diagnósticos detectados para ambos os sexos nos
+A previsão para o número de diagnósticos detectados cada faixa etária nos
 anos de 2030 e 2050 em cada um dos estados é: 
 "
 
@@ -400,9 +402,9 @@ kable(
 fit_data[no_regiao_brasil == region & (nu_ano == 2030 | nu_ano == 2050), 
          .(Ano = nu_ano, 
            Estado = sg_uf, 
-           Sexo = grupo, 
+          "Faixa etária" = grupo, 
            "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
-         ][, .SD, keyby = .(Estado, Ano, Sexo )]
+         ][, .SD, keyby = c("Estado", "Ano", "Faixa etária" )]
 )
 
 
@@ -420,14 +422,14 @@ predição de 95%
 
 ## Análise por estado
 
-fit_result <- anlz_pipeline(data, 'macro', 'sexo')
+fit_result <- anlz_pipeline(data, 'macro', 'idade')
 fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
 ### Tocantins
 
-uf <- 'TO'
+uf <- 'MT'
 
 "
 O número total de diagnósticos de hanseníase para as macrorregiões do estado do uf 
@@ -437,33 +439,190 @@ efeitos aleatórios do modelo, são:
 
 kable(fit_coef[sg_uf == uf, 
               .(Macrorregião = no_macrorregiao, 
-                Sexo = grupo,
+                "Faixa etária" = grupo, 
                 "Taxa de queda anual %" = - R0)
-               ][, .SD, keyby = c("Macrorregião", "Sexo")], 
+               ][, .SD, keyby = c("Macrorregião", "Faixa etária")], 
       digits = 1)
 
 
-" 
-A previsão para o número de diagnósticos detectados para ambos os sexos nos
-anos de 2030 e 2050 nas macrorregiões é: 
+"
+A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+as diferentes faixas etárias é:
 "
 
 kable(
 fit_data[sg_uf == uf & (nu_ano == 2030 | nu_ano == 2050), 
          .(Ano = nu_ano, 
            Macrorregião = no_macrorregiao, 
-                Sexo = grupo,
+          "Faixa etária" = grupo, 
            "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
-         ][, .SD, keyby = c("Macrorregião", "Ano", "Sexo")]
+         ][, .SD, keyby = c("Macrorregião", "Ano", "Faixa etária")]
 )
 
 
 if(uf %in% c('TO', 'MS', "MT")){
   " IMPORTANTE: No estado do uf uma ou mais macrorregiões apresentam tendência
-  de aumento do número de casos. No entanto, os dados do SINAN não possibilitam
-  a investigação do motivo do aumento, podendo ser por um crescimento real
-  no número de casos, ou um aumento na eficiência de detecção ou ainda erro no
-  número de diagnósticos. "
+  de aumento do número de casos principalmente entre idosos. No entanto, os
+  dados do SINAN não possibilitam a investigação do motivo do aumento, podendo
+  ser por um crescimento real no número de casos, ou um aumento na eficiência
+  de detecção ou ainda erro no número de diagnósticos. "
+}
+
+g <- uf_plot(fit_data, uf)
+g + 
+ labs(caption = 
+"
+Número de diagnósticos de hanseníase por 100 mil habitantes nas macrorregiões do
+uf. Os círculos representam total do diagnósticos detectados no Brasil a
+cada ano. Os valores esperados para a número de diagnósticos a cada ano
+é representado pela linha contínua sendo a área sombreada o intervalo de predição
+de 95%
+"
+ )
+
+
+# Previsão para diferentes faixas etárias
+
+## Brasil
+
+fit_result <- anlz_pipeline(data, 'br', 'idade')
+fit_data <- fit_result[[1]]
+fit_coef <- fit_result[[2]]
+fit_model <- fit_result[[3]]
+
+"
+O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
+de queda para diferentes faixas etárias, sendo a taxa anual para crianças de até 14 anos 
+- fit_coef[group = "até 14 anos", R0] %, 
+para jovens e adultos entre 15 e 59 anos - fit_coef[group = "entre 15 e 59 anos", R0] % 
+ e para idosos com mais de 60 anos - fit_coef[group = "mais que 60 anos", R0]. 
+Todas as taxas são estimadas a partir do efeitos fixos do modelo.
+"
+
+"
+A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+as diferentes faixas etárias é:
+"
+
+kable(
+fit_data[nu_ano == 2030 | nu_ano == 2050, 
+         .(Ano = nu_ano, 
+           "Faixa etária" = grupo, 
+           "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
+         ][, .SD, keyby = c("Faixa etária", "Ano")]
+)
+
+
+g <- 
+  fit_plot(fit_data)
+g + 
+ labs(caption = 
+"
+Número de diagnósticos de hanseníase por 100 mil habitantes em todo território
+nacional. Os círculos representam total do diagnósticos detectados no Brasil a
+cada ano. Os valores esperados para a número de diagnósticos a cada ano
+é representado pela linha contínua sendo a área sombreada o intervalo de predição
+de 95%. 
+"
+ )
+
+## Análise por Regiões
+
+fit_result <- anlz_pipeline(data, 'uf', 'idade')
+fit_data <- fit_result[[1]]
+fit_coef <- fit_result[[2]]
+fit_model <- fit_result[[3]]
+
+### Norte
+
+region <- "CENTRO-OESTE"
+
+"
+O número total de diagnósticos de hanseníase para os estados da região region
+apresentam tendencia de queda para ambos os sexos. As taxas anuais de queda,
+estimada a partir dos efeitos aleatórios do modelo, são:
+"
+
+kable(fit_coef[no_regiao_brasil == region, 
+              .(Estado = sg_uf, 
+                "Faixa etária" = grupo, 
+                "Taxa de queda anual %" = - R0)
+              ][, .SD, keyby = c("Estado", "Faixa etária")], 
+      digits = 1)
+
+" 
+A previsão para o número de diagnósticos detectados cada faixa etária nos
+anos de 2030 e 2050 em cada um dos estados é: 
+"
+
+kable(
+fit_data[no_regiao_brasil == region & (nu_ano == 2030 | nu_ano == 2050), 
+         .(Ano = nu_ano, 
+           Estado = sg_uf, 
+          "Faixa etária" = grupo, 
+           "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
+         ][, .SD, keyby = c("Estado", "Ano", "Faixa etária" )]
+)
+
+
+g <- region_plot(fit_data, region)
+g + 
+ labs(caption = 
+"
+Número de diagnósticos de hanseníase por 100 mil habitantes para os estados da
+região region. Os círculos representam total do diagnósticos detectados no
+Brasil a cada ano. Os valores esperados para a número de diagnósticos a cada
+ano representado pela linha contínua sendo a área sombreada o intervalo de
+predição de 95%
+"
+ )
+
+## Análise por estado
+
+fit_result <- anlz_pipeline(data, 'macro', 'idade')
+fit_data <- fit_result[[1]]
+fit_coef <- fit_result[[2]]
+fit_model <- fit_result[[3]]
+
+### Tocantins
+
+uf <- 'MT'
+
+"
+O número total de diagnósticos de hanseníase para as macrorregiões do estado do uf 
+apresentam tendencia de queda. As taxas anuais de queda, estimada a partir dos
+efeitos aleatórios do modelo, são:
+"
+
+kable(fit_coef[sg_uf == uf, 
+              .(Macrorregião = no_macrorregiao, 
+                "Faixa etária" = grupo, 
+                "Taxa de queda anual %" = - R0)
+               ][, .SD, keyby = c("Macrorregião", "Faixa etária")], 
+      digits = 1)
+
+
+"
+A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+as diferentes faixas etárias é:
+"
+
+kable(
+fit_data[sg_uf == uf & (nu_ano == 2030 | nu_ano == 2050), 
+         .(Ano = nu_ano, 
+           Macrorregião = no_macrorregiao, 
+          "Faixa etária" = grupo, 
+           "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
+         ][, .SD, keyby = c("Macrorregião", "Ano", "Faixa etária")]
+)
+
+
+if(uf %in% c('TO', 'MS', "MT")){
+  " IMPORTANTE: No estado do uf uma ou mais macrorregiões apresentam tendência
+  de aumento do número de casos principalmente entre idosos. No entanto, os
+  dados do SINAN não possibilitam a investigação do motivo do aumento, podendo
+  ser por um crescimento real no número de casos, ou um aumento na eficiência
+  de detecção ou ainda erro no número de diagnósticos. "
 }
 
 g <- uf_plot(fit_data, uf)
