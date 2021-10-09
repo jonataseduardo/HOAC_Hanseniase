@@ -30,7 +30,9 @@ source("statistics_utils.R")
 
 data <- read_and_preparedata()
 
-# Previsão Total de Diaginósticos
+#fwrite(data, '../data/han.csv')
+
+# Previsão Total de Diagnósticos
 
 ## Brasil
 
@@ -39,22 +41,25 @@ fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
-O número total de diagnósticos de hanseniase no Brasil apresenta uma tendencia
+O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
 de queda, com uma taxa anual de  - fit_coef[, R0] %, estimada a partir do
 efeito fixo do modelo.
 
-Para o ano de 2030 é previsto  fit_data[nu_ano == 2030, .(fit, lwr, upr)] número
-de diagnóticos por 100 mil habitantes, enquanto para o ano de 2050 é previsto 
-fit_data[nu_ano == 2050, .(fit, lwr, upr)].
+Para o ano de 2030 é previsto  
+fit_data[nu_ano == 2030, paste0(round(fit, 1), ' - (' , round(lwr, 1), ', ', round(upr, 1), ')CI95%')]
+diagnósticos detectados por 100 mil habitantes, enquanto para o ano de 2050 é previsto 
+fit_data[nu_ano == 2050, paste0(round(fit, 1), ' - (' , round(lwr, 1), ', ', round(upr, 1), ')CI95%')]
+diagnósticos por 100 mil habitantes.
 
-g <- fit_plot(fit_data)
+g <- 
+  fit_plot(fit_data)
 g + 
  labs(caption = 
 "
-Número de diagnóticos de hanseniase por 100 mil habitates em todo território
-nacional. Os circulos representam total do diagonósticos detectados no Brasil a
+Número de diagnósticos de hanseníase por 100 mil habitantes em todo território
+nacional. Os círculos representam total do diagnósticos detectados no Brasil a
 cada ano. Os valores esperados para a número de diagnósticos a cada ano
-érepresentado pela linha contínua sendo a área sobreada o intervalo de predição
+é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%
 "
  )
@@ -68,21 +73,37 @@ fit_model <- fit_result[[3]]
 
 ### Norte
 
-O número total de diagnósticos de hanseniase na região NORTE apresenta uma
-tendencia de queda, com taxas anuais de cada para cada estado, estimada a
-partir do, efeitos aleatórios do modelo, de:
+region <- "NORTE"
 
-kable(fit_coef[no_regiao_brasil == 'NORTE', .(sg_uf, R0)], digits = 1)
+O número total de diagnósticos de hanseníase para os estados da região region
+apresentam tendencia de queda. As taxas anuais de queda, estimada a partir dos
+efeitos aleatórios do modelo, são:
+
+kable(fit_coef[no_regiao_brasil == region, 
+              .(Estado = sg_uf, "Taxa de queda anual %" = - R0)], 
+      digits = 1)
 
 
-g <- region_plot(fit_data, "CENTRO-OESTE")
+A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+em cada um dos estados é:
+
+kable(
+fit_data[no_regiao_brasil == region & (nu_ano == 2030 | nu_ano == 2050), 
+         .(Ano = nu_ano, 
+           Estado = sg_uf, 
+           "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
+         ][, .SD, keyby = .(Estado, Ano)]
+)
+
+g <- region_plot(fit_data, "NORTE")
 g + 
  labs(caption = 
 "
-Número de diagnóticos de hanseniase por 100 mil habitates na região NORTE. Os
-circulos representam total do diagonósticos detectados no Brasil a cada ano. Os
-valores esperados para a número de diagnósticos a cada ano érepresentado pela
-linha contínua sendo a área sobreada o intervalo de predição de 95%
+Número de diagnósticos de hanseníase por 100 mil habitantes para os estados da
+região region. Os círculos representam total do diagnósticos detectados no
+Brasil a cada ano. Os valores esperados para a número de diagnósticos a cada
+ano representado pela linha contínua sendo a área sombreada o intervalo de
+predição de 95%
 "
  )
 
@@ -95,26 +116,50 @@ fit_model <- fit_result[[3]]
 
 ### Tocantins
 
-num_macroregioes <- data[sg_uf == 'TO', length(unique(no_macrorregiao))]
+uf <- 'MS'
 
-Os interecptos e coeficientes lineares (R0) para as macro regiões do estado do Tocantins são, 
-estimados como efeitos aleatórios do modelo, são:
+O número total de diagnósticos de hanseníase para as macrorregiões do estado do uf 
+apresentam tendencia de queda. As taxas anuais de queda, estimada a partir dos
+efeitos aleatórios do modelo, são:
 
-kable(fit_coef[sg_uf == 'TO', .(sg_uf, Intercept, R0 = 100 * R0)], digits=2)
+kable(fit_coef[sg_uf == uf, 
+              .(Macrorregião = no_macrorregiao, "Taxa de queda anual %" = - R0)], 
+      digits = 1)
 
-g <- uf_plot(fit_data, "DF")
+
+A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+em cada um dos estados é:
+
+kable(
+fit_data[sg_uf == uf & (nu_ano == 2030 | nu_ano == 2050), 
+         .(Ano = nu_ano, 
+           Macrorregião = no_macrorregiao, 
+           "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
+         ][, .SD, keyby = .(Macrorregião, Ano)]
+)
+
+
+if(uf %in% c('TO', 'MS', "MT")){
+  IMPORTANTE: No estado do uf uma ou mais macrorregiões apresentam tendência de aumento 
+  do número de casos recentes. No entanto, os dados do SINAN não possibilitam a investigação
+  do motivo do aumento, pode ndendo ser por um crescimento real no número de casos, ou um aumento 
+  na eficiência de detecção ou ainda erro no número de diagnósticos. 
+}
+
+uf <- 'AP'
+g <- uf_plot(fit_data, uf)
 g + 
  labs(caption = 
 "
-Número de diagnóticos de hanseniase por 100 mil habitates no estado do
-Tocantins. Os circulos representam total do diagonósticos detectados no Brasil a
+Número de diagnósticos de hanseníase por 100 mil habitantes nas macrorregiões  estado do
+Tocantins. Os círculos representam total do diagnósticos detectados no Brasil a
 cada ano. Os valores esperados para a número de diagnósticos a cada ano
-érepresentado pela linha contínua sendo a área sobreada o intervalo de predição
+é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%
 "
  )
 
-# Previsão  Diaginósticos por sexo
+# Previsão  Diagnósticos por sexo
 
 ## Brasil
 
@@ -150,7 +195,7 @@ uf_plot(fit_data, "TO")
 
 uf_plot(fit_data, "MS")
 
-# Previsão  Diaginósticos por faixa etária
+# Previsão  Diagnósticos por faixa etária
 
 ## Brasil
 
@@ -185,7 +230,7 @@ uf_plot(fit_data, "TO")
 
 uf_plot(fit_data, "MS")
 
-# Previsão  Diaginósticos por tipo de doenća 
+# Previsão  Diagnósticos por tipo de Bacilo 
 
 ## Brasil
 
