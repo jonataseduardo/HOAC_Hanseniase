@@ -222,9 +222,9 @@ anlz_pipeline <-
     fit_result_00_14 <- 
       fit_pipeline(data, level, 'qt_usuario_00a14', 'qt_populacao00a14', 'até 14 anos')
     fit_result_15_59 <- 
-      fit_pipeline(data, level, 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 20 e 59')
+      fit_pipeline(data, level, 'qt_usuario_20a59', 'qt_populacao20a59', 'entre 15 e 59 anos')
     fit_result_60_00 <- 
-      fit_pipeline(data, level, 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60')
+      fit_pipeline(data, level, 'qt_usuario_60a00', 'qt_populacao60a00', 'mais que 60 anos')
 
     fit_data <- 
       rbindlist(list(fit_result_00_14[[1]], fit_result_15_59[[1]], fit_result_60_00[[1]]))
