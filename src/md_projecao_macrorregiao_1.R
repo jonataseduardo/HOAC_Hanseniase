@@ -382,7 +382,7 @@ region <- "CENTRO-OESTE"
 
 "
 O número total de diagnósticos de hanseníase para os estados da região region
-apresentam tendencia de queda para ambos os sexos. As taxas anuais de queda,
+apresentam tendencia de queda para todas as faixas etarias. As taxas anuais de queda,
 estimada a partir dos efeitos aleatórios do modelo, são:
 "
 
@@ -506,9 +506,9 @@ ambos os tipos :
 kable(
 fit_data[nu_ano == 2030 | nu_ano == 2050, 
          .(Ano = nu_ano, 
-           "Faixa etária" = grupo, 
+           "Tipo" = grupo, 
            "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
-         ][, .SD, keyby = c("Faixa etária", "Ano")]
+         ][, .SD, keyby = c("Tipo", "Ano")]
 )
 
 
@@ -527,7 +527,7 @@ de 95%.
 
 ## Análise por Regiões
 
-fit_result <- anlz_pipeline(data, 'uf', 'idade')
+fit_result <- anlz_pipeline(data, 'uf', 'diag')
 fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
@@ -538,15 +538,15 @@ region <- "CENTRO-OESTE"
 
 "
 O número total de diagnósticos de hanseníase para os estados da região region
-apresentam tendencia de queda para ambos os sexos. As taxas anuais de queda,
+apresentam tendencia de queda para ambos os tipos. As taxas anuais de queda,
 estimada a partir dos efeitos aleatórios do modelo, são:
 "
 
 kable(fit_coef[no_regiao_brasil == region, 
               .(Estado = sg_uf, 
-                "Faixa etária" = grupo, 
+                "Tipo" = grupo, 
                 "Taxa de queda anual %" = - R0)
-              ][, .SD, keyby = c("Estado", "Faixa etária")], 
+              ][, .SD, keyby = c("Estado", "Tipo")], 
       digits = 1)
 
 "
@@ -558,9 +558,9 @@ kable(
 fit_data[no_regiao_brasil == region & (nu_ano == 2030 | nu_ano == 2050), 
          .(Ano = nu_ano, 
            Estado = sg_uf, 
-          "Faixa etária" = grupo, 
+          "Tipo" = grupo, 
            "NCDR 95%CI" = paste0(round(fit, 1), ' (' , round(lwr, 1), ', ', round(upr, 1), ')'))
-         ][, .SD, keyby = c("Estado", "Ano", "Faixa etária" )]
+         ][, .SD, keyby = c("Estado", "Ano", "Tipo" )]
 )
 
 
@@ -618,10 +618,11 @@ fit_data[sg_uf == uf & (nu_ano == 2030 | nu_ano == 2050),
 
 if(uf %in% c('TO', 'MS', "MT")){
   " IMPORTANTE: No estado do uf uma ou mais macrorregiões apresentam tendência
-  de aumento do número de casos principalmente entre idosos. No entanto, os
-  dados do SINAN não possibilitam a investigação do motivo do aumento, podendo
-  ser por um crescimento real no número de casos, ou um aumento na eficiência
-  de detecção ou ainda erro no número de diagnósticos. "
+  de aumento do número de casos principalmente para diagnósticos do tipo
+  multibacilar. No entanto, os dados do SINAN não possibilitam a investigação
+  do motivo do aumento, podendo ser por um crescimento real no número de casos,
+  ou um aumento na eficiência de detecção ou ainda erro no número de
+  diagnósticos. "
 }
 
 g <- uf_plot(fit_data, uf)
