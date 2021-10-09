@@ -246,7 +246,7 @@ anlz_pipeline <-
       rbindlist(list(fit_result_pa[[1]], fit_result_mu[[1]]))
 
     fit_coef <- 
-      rbindlist(list(fit_result_pa[[1]], fit_result_mu[[1]]))
+      rbindlist(list(fit_result_pa[[2]], fit_result_mu[[2]]))
 
     fit_model <- 
       list(fit_result_pa[[1]], fit_result_mu[[1]])
