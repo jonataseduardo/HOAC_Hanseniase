@@ -32,7 +32,7 @@ data <- read_and_preparedata()
 
 #fwrite(data, '../data/han.csv')
 
-# Previsão Total de Diagnósticos
+# Previsão Total de casos
 
 ## Brasil
 
@@ -41,17 +41,17 @@ fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 "
-O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
+O número total de casos de hanseníase no Brasil apresenta uma tendência
 de queda, com uma taxa anual de  - fit_coef[, R0] %, estimada a partir do
 efeito fixo do modelo.
 "
 
 "
-Para o ano de 2030 é previsto  
-fit_data[nu_ano == 2030, paste0(round(fit, 1), ' - (' , round(lwr, 1), ', ', round(upr, 1), ')CI95%')]
-diagnósticos detectados por 100 mil habitantes, enquanto para o ano de 2050 é previsto 
+Para o ano de 2030 é previsto uma taxa de detecção de novos casos por 100 mil habitantes de 
+fit_data[nu_ano == 2030, paste0(round(fit, 1), ' - (' , round(lwr, 1), ', ', round(upr, 1), ')CI95%')], 
+enquanto para o ano de 2050 é previsto 
 fit_data[nu_ano == 2050, paste0(round(fit, 1), ' - (' , round(lwr, 1), ', ', round(upr, 1), ')CI95%')]
-diagnósticos por 100 mil habitantes.
+novos casos detectados por 100 mil habitantes.
 "
 
 g <- 
@@ -59,9 +59,9 @@ g <-
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes em todo território
-nacional. Os círculos representam total do diagnósticos detectados no Brasil a
-cada ano. Os valores esperados para a número de diagnósticos a cada ano
+Número de casos de hanseníase por 100 mil habitantes em todo território
+nacional. Os círculos representam total do casos detectados no Brasil a
+cada ano. Os valores esperados para a número de casos a cada ano
 é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%
 "
@@ -74,14 +74,13 @@ fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
-### Norte
 
 region <- "NORTE"
 
 "
-O número total de diagnósticos de hanseníase para os estados da região region
-apresentam tendencia de queda. As taxas anuais de queda, estimada a partir dos
-efeitos aleatórios do modelo, são:
+O número total de casos de hanseníase para os estados da região region
+apresentam tendencia de queda, com taxas anuais, estimada a partir dos
+efeitos aleatórios do modelo, de:
 "
 
 kable(fit_coef[no_regiao_brasil == region, 
@@ -89,7 +88,7 @@ kable(fit_coef[no_regiao_brasil == region,
       digits = 1)
 
 "
-A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+A previsão para o número total de casos detectados nos anos de 2030 e 2050 
 em cada um dos estados é:
 "
 
@@ -105,9 +104,9 @@ g <- region_plot(fit_data, "NORTE")
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes para os estados da
-região region. Os círculos representam total do diagnósticos detectados no
-Brasil a cada ano. Os valores esperados para a número de diagnósticos a cada
+Número de casos de hanseníase por 100 mil habitantes para os estados da
+região region. Os círculos representam o número total do casos detectados no
+Brasil a cada ano. Os valores esperados para a número de casos a cada
 ano representado pela linha contínua sendo a área sombreada o intervalo de
 predição de 95%
 "
@@ -120,10 +119,10 @@ fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
-### Tocantins
+uf <- 'TO'
 
 "
-O número total de diagnósticos de hanseníase para as macrorregiões do  uf 
+O número total de casos de hanseníase para as macrorregiões do  uf 
 apresentam tendencia de queda. As taxas anuais de queda, estimada a partir dos
 efeitos aleatórios do modelo, são:
 "
@@ -133,7 +132,7 @@ kable(fit_coef[sg_uf == uf,
       digits = 1)
 
 "
-A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+A previsão para o número total de casos detectados nos anos de 2030 e 2050 
 em cada um dos estados é:
 "
 
@@ -151,7 +150,7 @@ if(uf %in% c('TO', 'MS', "MT")){
   IMPORTANTE: No estado do uf uma ou mais macrorregiões apresentam tendência de aumento 
   do número de casos recentes. No entanto, os dados do SINAN não possibilitam a investigação
   do motivo do aumento, podendo ser por um crescimento real no número de casos, ou um aumento 
-  na eficiência de detecção ou ainda erro no número de diagnósticos. 
+  na eficiência de detecção ou ainda erro no número de casos. 
   "
 }
 
@@ -160,9 +159,9 @@ g <- uf_plot(fit_data, uf)
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes nas macrorregiões do
-uf. Os círculos representam total do diagnósticos detectados no Brasil a
-cada ano. Os valores esperados para a número de diagnósticos a cada ano
+Número de casos de hanseníase por 100 mil habitantes nas macrorregiões do
+uf. Os círculos representam total do casos detectados no Brasil a
+cada ano. Os valores esperados para a número de casos a cada ano
 é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%
 "
@@ -179,14 +178,14 @@ fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
 "
-O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
+O número de casos de hanseníase no Brasil apresenta uma tendencia
 de queda para ambos sexos, sendo a taxa anual para o sexo masculino de  - fit_coef[grupo == "M", R0] %
 e para o feminino de - fit_coef[grupo == "F", R0] %. 
 Ambas taxas são estimadas a partir do efeitos fixos do modelo.
 "
 
 "
-A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+A previsão para o número de casos detectados nos anos de 2030 e 2050 
 os diferentes sexo é:
 "
 
@@ -204,9 +203,9 @@ g <-
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes em todo território
-nacional. Os círculos representam total do diagnósticos detectados no Brasil a
-cada ano. Os valores esperados para a número de diagnósticos a cada ano
+Número de casos de hanseníase por 100 mil habitantes em todo território
+nacional. Os círculos representam o número de casos detectados no Brasil a
+cada ano. Os valores esperados para a número de casos a cada ano
 é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%. 
 "
@@ -219,12 +218,11 @@ fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
-### Norte
 
 region <- "CENTRO-OESTE"
 
 "
-O número total de diagnósticos de hanseníase para os estados da região region
+O número de casos de hanseníase para os estados da região region
 apresentam tendencia de queda para ambos os sexos. As taxas anuais de queda,
 estimada a partir dos efeitos aleatórios do modelo, são:
 "
@@ -237,7 +235,7 @@ kable(fit_coef[no_regiao_brasil == region,
       digits = 1)
 
 " 
-A previsão para o número de diagnósticos detectados para ambos os sexos nos
+A previsão para o número de casos detectados para ambos os sexos nos
 anos de 2030 e 2050 em cada um dos estados é: 
 "
 
@@ -255,9 +253,9 @@ g <- region_plot(fit_data, region)
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes para os estados da
-região region. Os círculos representam total do diagnósticos detectados no
-Brasil a cada ano. Os valores esperados para a número de diagnósticos a cada
+Número de casos de hanseníase por 100 mil habitantes para os estados da
+região region. Os círculos representam o número de casos detectados no
+Brasil a cada ano. Os valores esperados para a número de casos a cada
 ano representado pela linha contínua sendo a área sombreada o intervalo de
 predição de 95%
 "
@@ -270,12 +268,10 @@ fit_data <- fit_result[[1]]
 fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
-### Tocantins
-
 uf <- 'TO'
 
 "
-O número total de diagnósticos de hanseníase para as macrorregiões do estado do uf 
+O número de casos de hanseníase para as macrorregiões do estado do uf 
 apresentam tendencia de queda. As taxas anuais de queda, estimada a partir dos
 efeitos aleatórios do modelo, são:
 "
@@ -289,7 +285,7 @@ kable(fit_coef[sg_uf == uf,
 
 
 " 
-A previsão para o número de diagnósticos detectados para ambos os sexos nos
+A previsão para o número de casos detectados para ambos os sexos nos
 anos de 2030 e 2050 nas macrorregiões é: 
 "
 
@@ -308,16 +304,16 @@ if(uf %in% c('TO', 'MS', "MT")){
   de aumento do número de casos. No entanto, os dados do SINAN não possibilitam
   a investigação do motivo do aumento, podendo ser por um crescimento real
   no número de casos, ou um aumento na eficiência de detecção ou ainda erro no
-  número de diagnósticos. "
+  número de casos. "
 }
 
 g <- uf_plot(fit_data, uf)
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes nas macrorregiões do
-uf. Os círculos representam total do diagnósticos detectados no Brasil a
-cada ano. Os valores esperados para a número de diagnósticos a cada ano
+Número de casos de hanseníase por 100 mil habitantes nas macrorregiões do
+uf. Os círculos representam total do casos detectados no Brasil a
+cada ano. Os valores esperados para a número de casos a cada ano
 é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%
 "
@@ -334,7 +330,7 @@ fit_coef <- fit_result[[2]]
 fit_model <- fit_result[[3]]
 
 "
-O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
+O número de casos de hanseníase no Brasil apresenta uma tendencia
 de queda para diferentes faixas etárias, sendo a taxa anual para crianças de até 14 anos 
 - fit_coef[grupo == "até 14 anos", R0] %, 
 para jovens e adultos entre 15 e 59 anos - fit_coef[grupo == "entre 15 e 59 anos", R0] % 
@@ -343,7 +339,7 @@ Todas as taxas são estimadas a partir do efeitos fixos do modelo.
 "
 
 "
-A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+A previsão para o número de casos detectados nos anos de 2030 e 2050 
 as diferentes faixas etárias é:
 "
 
@@ -361,9 +357,9 @@ g <-
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes em todo território
-nacional. Os círculos representam total do diagnósticos detectados no Brasil a
-cada ano. Os valores esperados para a número de diagnósticos a cada ano
+Número de casos de hanseníase por 100 mil habitantes em todo território
+nacional. Os círculos representam o número de casos detectados no Brasil a
+cada ano. Os valores esperados para a número de casos a cada ano
 é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%. 
 "
@@ -381,7 +377,7 @@ fit_model <- fit_result[[3]]
 region <- "CENTRO-OESTE"
 
 "
-O número total de diagnósticos de hanseníase para os estados da região region
+O número total de casos de hanseníase para os estados da região region
 apresentam tendencia de queda para todas as faixas etarias. As taxas anuais de queda,
 estimada a partir dos efeitos aleatórios do modelo, são:
 "
@@ -394,7 +390,7 @@ kable(fit_coef[no_regiao_brasil == region,
       digits = 1)
 
 " 
-A previsão para o número de diagnósticos detectados cada faixa etária nos
+A previsão para o número de casos detectados cada faixa etária nos
 anos de 2030 e 2050 em cada um dos estados é: 
 "
 
@@ -412,9 +408,9 @@ g <- region_plot(fit_data, region)
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes para os estados da
-região region. Os círculos representam total do diagnósticos detectados no
-Brasil a cada ano. Os valores esperados para a número de diagnósticos a cada
+Número de casos de hanseníase por 100 mil habitantes para os estados da
+região region. Os círculos representam total do casos detectados no
+Brasil a cada ano. Os valores esperados para a número de casos a cada
 ano representado pela linha contínua sendo a área sombreada o intervalo de
 predição de 95%
 "
@@ -432,7 +428,7 @@ fit_model <- fit_result[[3]]
 uf <- 'MT'
 
 "
-O número total de diagnósticos de hanseníase para as macrorregiões do estado do uf 
+O número total de casos de hanseníase para as macrorregiões do estado do uf 
 apresentam tendencia de queda. As taxas anuais de queda, estimada a partir dos
 efeitos aleatórios do modelo, são:
 "
@@ -446,7 +442,7 @@ kable(fit_coef[sg_uf == uf,
 
 
 "
-A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+A previsão para o número de casos detectados nos anos de 2030 e 2050 
 as diferentes faixas etárias é:
 "
 
@@ -465,23 +461,23 @@ if(uf %in% c('TO', 'MS', "MT")){
   de aumento do número de casos principalmente entre idosos. No entanto, os
   dados do SINAN não possibilitam a investigação do motivo do aumento, podendo
   ser por um crescimento real no número de casos, ou um aumento na eficiência
-  de detecção ou ainda erro no número de diagnósticos. "
+  de detecção ou ainda erro no número de casos. "
 }
 
 g <- uf_plot(fit_data, uf)
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes nas macrorregiões do
-uf. Os círculos representam total do diagnósticos detectados no Brasil a
-cada ano. Os valores esperados para a número de diagnósticos a cada ano
+Número de casos de hanseníase por 100 mil habitantes nas macrorregiões do
+uf. Os círculos representam total do casos detectados no Brasil a
+cada ano. Os valores esperados para a número de casos a cada ano
 é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%
 "
  )
 
 
-# Previsão para diferentes tipos de diagnósticos 
+# Previsão para diferentes tipos de casos 
 
 ## Brasil
 
@@ -492,14 +488,14 @@ fit_model <- fit_result[[3]]
 
 
 "
-O número total de diagnósticos de hanseníase no Brasil apresenta uma tendencia
-de queda para os dois tipos de diagnósticos, Paucibacilar e Multibacilar.  
-A taxa de queda para diagnósticos do tipo paucibacilar - fit_coef[grupo == 'Paucibacilar', R0]%  
-e para diagnósticos do tipo multibacilar é - fit_coef[grupo == 'Paucibacilar', R0]%. 
+O número de casos de hanseníase no Brasil apresenta uma tendencia
+de queda para os dois tipos de casos, Paucibacilar e Multibacilar.  
+A taxa de queda para casos do tipo paucibacilar - fit_coef[grupo == 'Paucibacilar', R0]%  
+e para casos do tipo multibacilar é - fit_coef[grupo == 'Paucibacilar', R0]%. 
 "
 
 "
-A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+A previsão para o número de casos detectados nos anos de 2030 e 2050 
 ambos os tipos :
 "
 
@@ -517,9 +513,9 @@ g <-
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes em todo território
-nacional. Os círculos representam total do diagnósticos detectados no Brasil a
-cada ano. Os valores esperados para a número de diagnósticos a cada ano
+Número de casos de hanseníase por 100 mil habitantes em todo território
+nacional. Os círculos representam o número de casos detectados no Brasil a
+cada ano. Os valores esperados para a número de casos a cada ano
 é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%. 
 "
@@ -537,7 +533,7 @@ fit_model <- fit_result[[3]]
 region <- "CENTRO-OESTE"
 
 "
-O número total de diagnósticos de hanseníase para os estados da região region
+O número de casos de hanseníase para os estados da região region
 apresentam tendencia de queda para ambos os tipos. As taxas anuais de queda,
 estimada a partir dos efeitos aleatórios do modelo, são:
 "
@@ -550,7 +546,7 @@ kable(fit_coef[no_regiao_brasil == region,
       digits = 1)
 
 "
-A previsão para o número de diagnósticos detectados nos anos de 2030 e 2050 
+A previsão para o número de casos detectados nos anos de 2030 e 2050 
 ambos os tipos :
 "
 
@@ -568,9 +564,9 @@ g <- region_plot(fit_data, region)
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes para os estados da
-região region. Os círculos representam total do diagnósticos detectados no
-Brasil a cada ano. Os valores esperados para a número de diagnósticos a cada
+Número de casos de hanseníase por 100 mil habitantes para os estados da
+região region. Os círculos representam número de casos detectados no
+Brasil a cada ano. Os valores esperados para a número de casos a cada
 ano representado pela linha contínua sendo a área sombreada o intervalo de
 predição de 95%
 "
@@ -588,7 +584,7 @@ fit_model <- fit_result[[3]]
 uf <- 'MT'
 
 "
-O número total de diagnósticos de hanseníase para as macrorregiões do estado do uf 
+O número de casos de hanseníase para as macrorregiões do estado do uf 
 apresentam tendencia de queda. As taxas anuais de queda, estimada a partir dos
 efeitos aleatórios do modelo, são:
 "
@@ -602,7 +598,7 @@ kable(fit_coef[sg_uf == uf,
 
 
 " 
-A previsão para o número de diagnósticos detectados cada faixa etária nos
+A previsão para o número de casos detectados cada faixa etária nos
 anos de 2030 e 2050 em cada um dos estados é: 
 "
 
@@ -618,20 +614,20 @@ fit_data[sg_uf == uf & (nu_ano == 2030 | nu_ano == 2050),
 
 if(uf %in% c('TO', 'MS', "MT")){
   " IMPORTANTE: No estado do uf uma ou mais macrorregiões apresentam tendência
-  de aumento do número de casos principalmente para diagnósticos do tipo
+  de aumento do número de casos principalmente para casos do tipo
   multibacilar. No entanto, os dados do SINAN não possibilitam a investigação
   do motivo do aumento, podendo ser por um crescimento real no número de casos,
   ou um aumento na eficiência de detecção ou ainda erro no número de
-  diagnósticos. "
+  casos. "
 }
 
 g <- uf_plot(fit_data, uf)
 g + 
  labs(caption = 
 "
-Número de diagnósticos de hanseníase por 100 mil habitantes nas macrorregiões do
-uf. Os círculos representam total do diagnósticos detectados no Brasil a
-cada ano. Os valores esperados para a número de diagnósticos a cada ano
+Número de casos de hanseníase por 100 mil habitantes nas macrorregiões do
+uf. Os círculos representam número de casos detectados no Brasil a
+cada ano. Os valores esperados para a número de casos a cada ano
 é representado pela linha contínua sendo a área sombreada o intervalo de predição
 de 95%
 "
