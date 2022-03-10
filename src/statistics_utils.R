@@ -6,12 +6,23 @@ library(lme4)
 library(RPostgreSQL) # SGBD PostgreSQL no R
 
 # dependecies tk, gcc-fortran, postgresql-libs (manjaro names pacman)
-# install.packages("lme4",
-#   repos=c("http://lme4.r-forge.r-project.org/repos",
-#          getOption("repos")[["CRAN"]]))
+#install.packages("lme4",
+#  repos=c("http://lme4.r-forge.r-project.org/repos",
+#         getOption("repos")[["CRAN"]]))
 #
-#install.packages(c("data.table","ggplot2", "insight", "ggpubr", "ggrepel", "RPostgreSQL"))
-#install.packages("tidymodels")
+#install.packages(
+#  c("RPostgreSQL",
+#    "data.table",
+#    "ggplot2",
+#    "insight",
+#    "ggpubr",
+#    "ggrepel",
+#    "RPostgreSQL",
+#    "knitr",
+#    "see",
+#    "performance",
+#    "tidymodels")
+#)
 
 # Cria tabela com valores dos efeitos fixos e aleatórios considerando
 # o modelo de decaimento exponencial. O número inicial de casos é repassado como N0
@@ -223,7 +234,8 @@ anlz_pipeline <-
 
     fit_data <- fit_result[[1]]
     fit_coef <- fit_result[[2]]
-    fit_model <- fit_result[[3]]
+    fit_model <- list(fit_result[[3]])
+    names(fit_model) <- c('Total de Diagnósticos')
   }
 
   if(grouping == 'sexo'){
@@ -240,6 +252,8 @@ anlz_pipeline <-
 
     fit_model <-
       list(fit_result_m[[3]], fit_result_f[[3]])
+
+    names(fit_model) <- c('M', 'F')
   }
 
   if(grouping == 'idade'){
@@ -258,6 +272,8 @@ anlz_pipeline <-
 
     fit_model <-
       list(fit_result_00_14[[3]], fit_result_15_59[[3]], fit_result_60_00[[3]])
+
+    names(fit_model) <-c('até 14 anos', 'entre 15 e 59 anos','mais que 60 anos')
   }
 
   if(grouping == 'diag'){
@@ -274,15 +290,17 @@ anlz_pipeline <-
 
     fit_model <-
       list(fit_result_pa[[1]], fit_result_mu[[1]])
+
+    names(fit_model) <- c('Paucibacilar', 'Multibacilar')
   }
 
   if(grouping == 'incapacidade'){
     fit_result_grau0 <-
-      fit_pipeline(data, level, 'qt_aval_atu_n_grau0', 'qt_populacao', 'Grau 0 ')
+      fit_pipeline(data, level, 'qt_aval_atu_n_grau0', 'qt_populacao', 'Grau 0')
     fit_result_grau1 <-
-      fit_pipeline(data, level, 'qt_aval_atu_n_grau1', 'qt_populacao', 'Grau 1 ')
+      fit_pipeline(data, level, 'qt_aval_atu_n_grau1', 'qt_populacao', 'Grau 1')
     fit_result_grau2 <-
-      fit_pipeline(data, level, 'qt_aval_atu_n_grau2', 'qt_populacao', 'Grau 2 ')
+      fit_pipeline(data, level, 'qt_aval_atu_n_grau2', 'qt_populacao', 'Grau 2')
 
     fit_data <-
       rbindlist(list(fit_result_grau0[[1]], fit_result_grau1[[1]], fit_result_grau2[[1]]))
@@ -292,6 +310,9 @@ anlz_pipeline <-
 
     fit_model <-
       list(fit_result_grau0[[3]], fit_result_grau1[[3]], fit_result_grau2[[3]])
+    
+    names(fit_model) <- c('Grau 0', 'Grau 1', 'Grau 2')
+
   }
 
   if(grouping == 'subnotificacao'){
@@ -389,8 +410,8 @@ read_and_preparedata <-
     data.table()
 
   data <-
-    data_full[!is.na(sg_uf) & !is.na(no_macrorregiao) & nu_ano_dt_notific < 2020]
-  data[, nu_ano := nu_ano_dt_notific - min(nu_ano_dt_notific)]
+    data_full[!is.na(sg_uf) & !is.na(no_macrorregiao) & nu_ano_dt_diag < 2020]
+  data[, nu_ano := nu_ano_dt_diag - min(nu_ano_dt_diag)]
   data[, no_macrorregiao := factor(paste0(no_macrorregiao, ' (', sg_uf, ')'))]
   #data[, no_macrorregiao := gsub("^(Macrorregião|Macrorregional)(.+)$","\\\\2", no_macrorregiao )]
   #data[sg_uf == 'AC', no_macrorregiao := 'Única (AC)']
