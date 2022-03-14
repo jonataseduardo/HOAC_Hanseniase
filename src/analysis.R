@@ -48,16 +48,33 @@ lg_effects <-
     return(res)
   }
 
+
+group_anova <- 
+  function(model_list)
+    rbindlist(
+      lapply(
+        model_list, 
+        function(m){
+          data.table(anova(m))
+        }
+        ), 
+      idcol = "grupo", 
+      use.names = TRUE
+    )
+
+lg_anova <-
+  function(l, g){
+    fit_list <- anlz_pipeline(data, l, g)[[3]]
+    res <- group_anova(fit_list)
+    res[, modelo := l]
+    return(res)
+  }
+
 data <- read_and_preparedata()
 
 
 level_list <- c('uf', 'macro')
 group_list <- c('total', 'sexo', 'idade')
-
-l <- level_list[1]
-g <- group_list[1]
-
-lg_effects(l, g)
 
 
 pref <- 
@@ -82,7 +99,19 @@ eres <-
       }
     ), fill = TRUE, use.names = TRUE)
 
-eres
+
+ares <- 
+  rbindlist(lapply(
+    level_list, 
+    function(l){
+      rbindlist(lapply(
+        group_list, 
+        function(g) {lg_anova(l,g)}
+        ))
+      }
+    ), fill = TRUE, use.names = TRUE)
+
+ares
 
 pres[, .SD, by = .(grupo, modelo)]
 
@@ -92,9 +121,6 @@ m2 <- anlz_pipeline(data, 'macro', 'total')[[3]][[1]]
 x <- anova(m1)
 data.table(x)
 
-y <- data.table(coef(summary(m2)))
-y[, 'Fixed Effect' := c('Intercept', 'Ano')]
-y[, .SD, by = c('Fixed Effect')]
 
 
 
