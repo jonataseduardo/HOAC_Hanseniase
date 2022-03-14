@@ -1,48 +1,48 @@
 library(knitr)
 library(performance)
-install.packages('devtools')
-library(devtools)
-library(r2mlm)
-devtools::install_github("mkshaw/r2mlm")
-
-devtools::install_github("strengejacke/sjPlot")
 
 source("statistics_utils.R")
 
+group_performance <- 
+  function(model_list)
+    rbindlist(
+      lapply(
+        model_list, 
+        model_performance, 
+        metrics = 'all'
+        ), 
+      idcol = "grupo", 
+      use.names = TRUE
+    )
+
+gl_performance <-
+  function(l, g){
+    fit_list <- anlz_pipeline(data, l, g)[[3]]
+    res <- group_performance(fit_list)
+    res[, modelo := l]
+    return(res)
+  }
+
 data <- read_and_preparedata()
 
-fit_result <- anlz_pipeline(data, 'macro', 'total')
-fit_data <- fit_result[[1]]
-fit_coef <- fit_result[[2]]
-fit_model <- anlz_pipeline(data, 'uf', 'total')[[3]]
+#m1 <- anlz_pipeline(data, 'uf', 'total')[[3]][[1]]
 
-m1 <- anlz_pipeline(data, 'uf', 'total')[[3]][[1]]
-m2 <- anlz_pipeline(data, 'macro', 'total')[[3]][[1]]
-
-x <- rbindlist(lapply(fit_model, model_performance, metrics = 'all'), use.names = TRUE)
-
-test_performance(m1, m2)
-r2(m21 tolerance= 1e-4)
-
-r2mlm(m2, bargraph=FALSE)
-
-z <- 
-  anova(m2)
-
-show_tests(z)
-z
-z <- drop1(m2)
-z
+level_list <- c('uf', 'macro')
+group_list <- c('total', 'sexo', 'idade')
 
 
-zz <- data.table(z)
-zz[, level := c(0, names(attr(z, "formulae")))]
-zz
+pres <- 
+  rbindlist(lapply(
+    level_list, 
+    function(l){
+      rbindlist(lapply(
+        group_list, 
+        function(g) {gl_performance(l,g)}
+        ))
+      }
+    ), fill = TRUE, use.names = TRUE)
 
-data(TVbo)
 
-tv <- 
-  data.table(TVbo)
+pres[, .SD, by = .(grupo, modelo)]
 
-tv[, .GRP, .(Assessor, TVset, Repeat, Picture)]
-tv[, .GRP, .(Assessor, TVset)]
+names(data)
