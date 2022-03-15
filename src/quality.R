@@ -1,5 +1,10 @@
 library(knitr)
 library(performance)
+library(ggplot2)
+#library(multilevelTools)
+#mitl::multilevelR2
+#install.packages('partR2')
+#library('partR2')
 
 source("statistics_utils.R")
 
@@ -14,6 +19,7 @@ group_performance <-
       idcol = "grupo", 
       use.names = TRUE
     )
+
 
 lg_performance <-
   function(l, g){
@@ -70,14 +76,47 @@ lg_anova <-
     return(res)
   }
 
-data <- read_and_preparedata()
 
+
+### Main ####
+
+data <- read_and_preparedata()
 
 level_list <- c('uf', 'macro')
 group_list <- c('total', 'sexo', 'idade')
 
 
-pref <- 
+l <- level_list[1]
+g <- group_list[1]
+i <- 1
+m <- anlz_pipeline(data, l, g)[[3]][[i]]
+
+
+for(l in level_list){
+  for(g in group_list){
+
+    list_models <- 
+      anlz_pipeline(data, l, g)[[3]]
+
+    names_list_models <- 
+      names(list_models)
+
+    len <- length(list_models)
+
+    for(i in 1:len){
+      m <- anlz_pipeline(data, l, g)[[3]][[i]]
+      nm <- names_list_models[i]
+      fn <- paste0('../figures/', l, '-', g,'-', nm, '.png')
+      print(fn)
+      p <- check_model(m)
+      print(p)
+      ggsave(fn)
+      }
+    }
+  }
+
+
+performance_results <- 
   rbindlist(lapply(
     level_list, 
     function(l){
@@ -88,7 +127,10 @@ pref <-
       }
     ), fill = TRUE, use.names = TRUE)
 
-eres <- 
+performance_results
+
+
+effects_results <- 
   rbindlist(lapply(
     level_list, 
     function(l){
@@ -100,7 +142,7 @@ eres <-
     ), fill = TRUE, use.names = TRUE)
 
 
-ares <- 
+anova_results <- 
   rbindlist(lapply(
     level_list, 
     function(l){
@@ -110,16 +152,6 @@ ares <-
         ))
       }
     ), fill = TRUE, use.names = TRUE)
-
-ares
-
-pres[, .SD, by = .(grupo, modelo)]
-
-m1 <- anlz_pipeline(data, 'uf', 'total')[[3]][[1]]
-m2 <- anlz_pipeline(data, 'macro', 'total')[[3]][[1]]
-
-x <- anova(m1)
-data.table(x)
 
 
 
