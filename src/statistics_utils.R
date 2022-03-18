@@ -302,17 +302,19 @@ anlz_pipeline <-
       fit_pipeline(data, level, 'qt_aval_aut_n_grau1', 'qt_populacao', 'Grau 1')
     fit_result_grau2 <-
       fit_pipeline(data, level, 'qt_aval_aut_n_grau2', 'qt_populacao', 'Grau 2')
+    fit_result_grau3 <-
+      fit_pipeline(data, level, 'qt_aval_aut_n_grau3', 'qt_populacao', 'Grau 3')
 
     fit_data <-
-      rbindlist(list(fit_result_grau0[[1]], fit_result_grau1[[1]], fit_result_grau2[[1]]))
+      rbindlist(list(fit_result_grau0[[1]], fit_result_grau1[[1]], fit_result_grau2[[1]], fit_result_grau3[[1]]))
 
     fit_coef <-
-      rbindlist(list(fit_result_grau0[[2]], fit_result_grau1[[2]], fit_result_grau2[[2]]))
+      rbindlist(list(fit_result_grau0[[2]], fit_result_grau1[[2]], fit_result_grau2[[2]], fit_result_grau3[[2]]))
 
     fit_model <-
-      list(fit_result_grau0[[3]], fit_result_grau1[[3]], fit_result_grau2[[3]])
+      list(fit_result_grau0[[3]], fit_result_grau1[[3]], fit_result_grau2[[3]], fit_result_grau3[[3]])
     
-    names(fit_model) <- c('Grau 0', 'Grau 1', 'Grau 2')
+    names(fit_model) <- c('Grau 0', 'Grau 1', 'Grau 2', 'Grau 3')
 
   }
 
