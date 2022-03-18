@@ -152,6 +152,7 @@ performance_results[, `:=`("AIC" = NULL, "BIC" = NULL)]
 performance_results <-  
   performance_results[, .SD, by = .(modelo, grupo)]
 
+performance_results
 
 r2beta_results <- 
   rbindlist(lapply(
@@ -167,6 +168,8 @@ r2beta_results <-
 
 r2beta_results <-  
   r2beta_results[, .SD, by = .(modelo, grupo)]
+
+r2beta_results
 
 
 effects_results <- 
