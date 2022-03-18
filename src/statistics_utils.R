@@ -4,6 +4,7 @@ library(insight)
 library(ggpubr)
 library(lme4)
 library(RPostgreSQL) # SGBD PostgreSQL no R
+library(lmerTest)
 
 # dependecies tk, gcc-fortran, postgresql-libs (manjaro names pacman)
 #install.packages("lme4",
@@ -296,11 +297,11 @@ anlz_pipeline <-
 
   if(grouping == 'incapacidade'){
     fit_result_grau0 <-
-      fit_pipeline(data, level, 'qt_aval_atu_n_grau0', 'qt_populacao', 'Grau 0')
+      fit_pipeline(data, level, 'qt_aval_aut_n_grau0', 'qt_populacao', 'Grau 0')
     fit_result_grau1 <-
-      fit_pipeline(data, level, 'qt_aval_atu_n_grau1', 'qt_populacao', 'Grau 1')
+      fit_pipeline(data, level, 'qt_aval_aut_n_grau1', 'qt_populacao', 'Grau 1')
     fit_result_grau2 <-
-      fit_pipeline(data, level, 'qt_aval_atu_n_grau2', 'qt_populacao', 'Grau 2')
+      fit_pipeline(data, level, 'qt_aval_aut_n_grau2', 'qt_populacao', 'Grau 2')
 
     fit_data <-
       rbindlist(list(fit_result_grau0[[1]], fit_result_grau1[[1]], fit_result_grau2[[1]]))

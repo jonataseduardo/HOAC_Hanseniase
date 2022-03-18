@@ -103,13 +103,13 @@ lg_r2beta <-
 data <- read_and_preparedata()
 
 level_list <- c('uf', 'macro')
-group_list <- c('total', 'sexo', 'idade')
+group_list <- c('total', 'sexo', 'idade', 'incapacidade')
 
 
-#l <- level_list[1]
-#g <- group_list[1]
-#i <- 1
-#m <- anlz_pipeline(data, l, g)[[3]][[i]]
+l <- level_list[1]
+g <- group_list[4]
+i <- 1
+m <- anlz_pipeline(data, l, g)[[3]][[i]]
 
 
 for(l in level_list){
@@ -147,6 +147,8 @@ performance_results <-
       }
     ), fill = TRUE, use.names = TRUE)
 
+
+performance_results[, `:=`("AIC" = NULL, "BIC" = NULL)]
 performance_results <-  
   performance_results[, .SD, by = .(modelo, grupo)]
 
@@ -182,6 +184,7 @@ effects_results <-
   effects_results[, .SD, by = c("modelo", "grupo", "Fixed Effect")]
 
 
+
 anova_results <- 
   rbindlist(lapply(
     level_list, 
@@ -196,6 +199,7 @@ anova_results <-
 anova_results <-  
   anova_results[, .SD, by = .(modelo, grupo)]
 
+anova_results
 
 fwrite(performance_results, '../data/perfomance.csv')
 fwrite(r2beta_results, '../data/r2beta.csv')
